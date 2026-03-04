@@ -1,5 +1,5 @@
 {
-  "name": "python-template",
+  "name": "mitre-emb3d",
   "dockerFile": "Dockerfile",
   "runArgs": ["--env-file", ".devcontainer/devcontainer.env"],
   "customizations": {

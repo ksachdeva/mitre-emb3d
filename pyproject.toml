@@ -1,7 +1,7 @@
 [project]
-name = "python-template"
+name = "mitre-emb3d"
 version = "0.0.1"
-description = "Template for Python projects"
+description = "MITRE EMB3D: A Python library for working with the MITRE EMB3D framework."
 readme = "README.md"
 authors = [
     { name = "Sachdeva, Kapil"}
@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 [project.urls]
-repository = "https://github.com/ksachdeva/python-template"
+repository = "https://github.com/ksachdeva/mitre-emb3d"
 
 
 [build-system]
