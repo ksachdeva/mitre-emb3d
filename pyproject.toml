@@ -8,6 +8,12 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
+    "httpx>=0.28.1",
+    "networkx>=3.6.1",
+    "pydantic>=2.12.5",
+    "stix2>=3.0.2",
+    "typer>=0.16.0",
+    "xdg-base-dirs>=6.0.2",
 ]
 
 classifiers = [
@@ -26,6 +32,9 @@ classifiers = [
 [project.urls]
 repository = "https://github.com/ksachdeva/mitre-emb3d"
 
+[project.scripts]
+mitre-emb3d = "mitre_emb3d.__main__:cli_app"
+med = "mitre_emb3d.__main__:cli_app"
 
 [build-system]
 requires = ["hatchling"]
