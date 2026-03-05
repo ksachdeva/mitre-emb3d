@@ -11,7 +11,13 @@ from typer import Typer
 
 from mitre_emb3d import __version__
 from mitre_emb3d._doc_loaders import from_release
-from mitre_emb3d._graph import build_split_graph, get_vulnerabilities_by_category, write_graphml
+from mitre_emb3d._graph import (
+    build_split_graph,
+    get_properties_by_category,
+    get_subproperties,
+    get_vulnerabilities_by_category,
+    write_graphml,
+)
 from mitre_emb3d._locations import cache_directory
 from mitre_emb3d._models import Emb3dCategory, ObjectType
 from mitre_emb3d._models import StixBundle as ST
@@ -83,6 +89,37 @@ def categories(ctx: typer.Context) -> None:
     adapter = TypeAdapter(List[str])
 
     sys.stdout.write(adapter.dump_json(the_categories, indent=0).decode("utf-8"))
+
+
+@cli_app.command()
+def get_properties(
+    ctx: typer.Context,
+    category: Emb3dCategory,
+    level: Annotated[
+        int,
+        typer.Option(help="Depth of sub-properties to include (1 = top-level only, 2 = include sub-properties, etc.)"),
+    ] = 1,
+) -> None:
+    """Get list of properties for a certain category"""
+    state = cast(CmdState, ctx.obj)
+    G = state.graph
+
+    def _sort_key(node_id: str) -> int:
+        pid = G.nodes[node_id].get("x_mitre_emb3d_property_id", "PID-0")
+        return int(pid.split("-")[1])
+
+    def print_tree(node_id: str, indent: int, current_depth: int) -> None:
+        props = G.nodes[node_id]
+        prefix = "  " * indent + "- "
+        rprint(f"{prefix}{props.get('x_mitre_emb3d_property_id')}: {props.get('name')}")
+        if current_depth < level:
+            subs = sorted(get_subproperties(G, node_id), key=_sort_key)
+            for sub in subs:
+                print_tree(sub, indent + 1, current_depth + 1)
+
+    top_level = sorted(get_properties_by_category(G, category), key=_sort_key)
+    for node_id in top_level:
+        print_tree(node_id, indent=0, current_depth=1)
 
 
 @cli_app.command()

@@ -133,6 +133,21 @@ def get_vulnerabilities_by_category(G: nx.DiGraph, category: str) -> list[str]:
     return result
 
 
+def get_properties_by_category(G: nx.DiGraph, category: str) -> list[str]:
+    """Return top-level property node IDs that point to the given category."""
+    if category not in G:
+        raise ValueError(
+            f"Category '{category}' not found in graph. "
+            f"Valid categories: {[n for n, d in G.nodes(data=True) if d.get('object_type') == 'category']}"
+        )
+    return [n for n in G.predecessors(category) if G.nodes[n].get("object_type") == str(ObjectType.EMB3D_PROPERTY)]
+
+
+def get_subproperties(G: nx.DiGraph, property_node: str) -> list[str]:
+    """Return sub-property node IDs that point to the given property node."""
+    return [n for n in G.predecessors(property_node) if G.nodes[n].get("object_type") == str(ObjectType.EMB3D_PROPERTY)]
+
+
 def write_graphml(G: nx.DiGraph, output_path: Path) -> None:
     """Write the graph to a GraphML file."""
     nx.write_graphml(G, output_path)
