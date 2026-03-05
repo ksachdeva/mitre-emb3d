@@ -91,6 +91,48 @@ def build_split_graph(bundle_doc: StixBundle) -> nx.DiGraph:
     return G
 
 
+def get_vulnerabilities_by_category(G: nx.DiGraph, category: str) -> list[str]:
+    """Return a list of vulnerability node IDs for a given category.
+
+    Edge directions in the graph:
+      top-level-property ──► category
+      sub-property       ──► parent-property
+      property           ──► vulnerability  (relates-to)
+
+    So vulnerabilities are *successors* of property nodes, not ancestors of
+    the category.  The traversal is therefore:
+      1. Collect all emb3d-property nodes that are ancestors of ``category``
+         (i.e. top-level properties and sub-properties whose chain leads to it).
+      2. Walk each property's successors and keep vulnerability nodes.
+
+    Args:
+        G: The directed graph built by :func:`build_split_graph`.
+        category: The category node label, e.g. ``"Hardware"``.
+
+    Returns:
+        A deduplicated list of vulnerability node IDs.
+    """
+    if category not in G:
+        raise ValueError(
+            f"Category '{category}' not found in graph. "
+            f"Valid categories: {[n for n, d in G.nodes(data=True) if d.get('object_type') == 'category']}"
+        )
+
+    property_nodes = {
+        n for n in nx.ancestors(G, category) if G.nodes[n].get("object_type") == str(ObjectType.EMB3D_PROPERTY)
+    }
+
+    seen: set[str] = set()
+    result: list[str] = []
+    for prop in property_nodes:
+        for successor in G.successors(prop):
+            if successor not in seen and G.nodes[successor].get("object_type") == str(ObjectType.VULNERABILITY):
+                seen.add(successor)
+                result.append(successor)
+
+    return result
+
+
 def write_graphml(G: nx.DiGraph, output_path: Path) -> None:
     """Write the graph to a GraphML file."""
     nx.write_graphml(G, output_path)
