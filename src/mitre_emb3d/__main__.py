@@ -1,8 +1,9 @@
+import json
 import logging
 import sys
 from pathlib import Path
 from re import L
-from typing import Annotated, List, cast
+from typing import Annotated, Any, List, cast
 
 import typer
 from pydantic import TypeAdapter
@@ -54,6 +55,7 @@ def main(
             help="Set the logging level (debug, info, warning, error, critical)",
         ),
     ] = "warning",
+    pprint: Annotated[bool, typer.Option(help="Whether to pretty-print the output (e.g. JSON lists)")] = False,
     cache: Annotated[bool, typer.Option(help="Whether to cache the emb3d-stix.json file for future use")] = True,
 ) -> None:
     logging.basicConfig(level=LOG_LEVELS.get(loglevel, logging.WARNING))
@@ -71,6 +73,7 @@ def main(
 
     ctx.ensure_object(CmdState)
     ctx.obj = CmdState()
+    ctx.obj.pprint = pprint
     ctx.obj.doc = bundle_doc
     ctx.obj.graph = build_split_graph(bundle_doc)
 
@@ -101,6 +104,7 @@ def get_properties(
     ] = 1,
 ) -> None:
     """Get list of properties for a certain category"""
+
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
@@ -108,18 +112,33 @@ def get_properties(
         pid = G.nodes[node_id].get("x_mitre_emb3d_property_id", "PID-0")
         return int(pid.split("-")[1])
 
-    def print_tree(node_id: str, indent: int, current_depth: int) -> None:
+    def build_node(node_id: str, current_depth: int) -> dict:
         props = G.nodes[node_id]
-        prefix = "  " * indent + "- "
-        rprint(f"{prefix}{props.get('x_mitre_emb3d_property_id')}: {props.get('name')}")
+        entry: dict[str, Any] = {
+            "id": props.get("x_mitre_emb3d_property_id"),
+            "name": props.get("name"),
+        }
         if current_depth < level:
             subs = sorted(get_subproperties(G, node_id), key=_sort_key)
-            for sub in subs:
-                print_tree(sub, indent + 1, current_depth + 1)
+            if subs:
+                entry["subproperties"] = [build_node(s, current_depth + 1) for s in subs]
+        return entry
 
     top_level = sorted(get_properties_by_category(G, category), key=_sort_key)
-    for node_id in top_level:
-        print_tree(node_id, indent=0, current_depth=1)
+    result = [build_node(node_id, current_depth=1) for node_id in top_level]
+
+    if state.pprint:
+
+        def print_tree(entry: dict[str, Any], indent: int) -> None:
+            prefix = "  " * indent + "- "
+            rprint(f"{prefix}{entry['id']}: {entry['name']}")
+            for sub in entry.get("subproperties", []):
+                print_tree(sub, indent + 1)
+
+        for entry in result:
+            print_tree(entry, indent=0)
+    else:
+        sys.stdout.write(json.dumps(result, indent=None))
 
 
 @cli_app.command()
@@ -134,8 +153,13 @@ def get_threats(ctx: typer.Context, category: Emb3dCategory) -> None:
         (G.nodes[v] for v in vulnerabilities),
         key=lambda v: int(v.get("x_mitre_emb3d_threat_id", "TID-0").split("-")[1]),
     )
-    for v in vulns:
-        rprint(f"- {v.get('x_mitre_emb3d_threat_id')}: {v.get('name')}")
+
+    if state.pprint:
+        for v in vulns:
+            rprint(f"- {v.get('x_mitre_emb3d_threat_id')}: {v.get('name')}")
+    else:
+        result = [{"id": v.get("x_mitre_emb3d_threat_id"), "name": v.get("name")} for v in vulns]
+        sys.stdout.write(json.dumps(result, indent=None))
 
 
 @cli_app.command()
@@ -155,8 +179,13 @@ def get_mitigations(ctx: typer.Context, threat_id: str) -> None:
         mitigations,
         key=lambda m: int(m.get("x_mitre_emb3d_mitigation_id", "MID-0").split("-")[1]),
     )
-    for m in mitigs:
-        rprint(f"- {m.get('x_mitre_emb3d_mitigation_id')}: {m.get('name')}")
+
+    if state.pprint:
+        for m in mitigs:
+            rprint(f"- {m.get('x_mitre_emb3d_mitigation_id')}: {m.get('name')}")
+    else:
+        result = [{"id": m.get("x_mitre_emb3d_mitigation_id"), "name": m.get("name")} for m in mitigs]
+        sys.stdout.write(json.dumps(result, indent=None))
 
 
 @cli_app.command()

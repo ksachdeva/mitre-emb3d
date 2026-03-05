@@ -7,6 +7,15 @@ class CmdState:
     def __init__(self) -> None:
         self._doc: StixBundle | None = None
         self._graph: nx.DiGraph | None = None
+        self._pprint: bool = False
+
+    @property
+    def pprint(self) -> bool:
+        return self._pprint
+
+    @pprint.setter
+    def pprint(self, value: bool) -> None:
+        self._pprint = value
 
     @property
     def graph(self) -> nx.DiGraph:
