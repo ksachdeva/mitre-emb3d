@@ -4,7 +4,17 @@ from pathlib import Path
 
 import networkx as nx
 
-from ._models import Emb3dCategory, ObjectType, StixBundle
+from ._models import (
+    CourseOfAction,
+    Emb3dCategory,
+    Emb3dProperty,
+    ObjectType,
+    StixBundle,
+    ThreatHeatMap,
+    ThreatResolution,
+    ThreatState,
+    Vulnerability,
+)
 
 
 def build_split_graph(bundle_doc: StixBundle) -> nx.DiGraph:
@@ -19,10 +29,10 @@ def build_split_graph(bundle_doc: StixBundle) -> nx.DiGraph:
     emb3d_ids = {}
 
     # create nodes for categories
-    G.add_node(str(Emb3dCategory.HARDWARE), object_type="category")
-    G.add_node(str(Emb3dCategory.SYSTEM_SW), object_type="category")
-    G.add_node(str(Emb3dCategory.APP_SW), object_type="category")
-    G.add_node(str(Emb3dCategory.NETWORKING), object_type="category")
+    G.add_node(str(Emb3dCategory.HARDWARE), type="category")
+    G.add_node(str(Emb3dCategory.SYSTEM_SW), type="category")
+    G.add_node(str(Emb3dCategory.APP_SW), type="category")
+    G.add_node(str(Emb3dCategory.NETWORKING), type="category")
 
     # first pass: add all nodes except relationships & edge to category nodes
     for item in bundle_doc.objects:
@@ -91,63 +101,101 @@ def build_split_graph(bundle_doc: StixBundle) -> nx.DiGraph:
     return G
 
 
-def get_vulnerabilities_by_category(G: nx.DiGraph, category: str) -> list[str]:
-    """Return a list of vulnerability node IDs for a given category.
+def get_mitigations(
+    G: nx.DiGraph,
+    threat_id: str,
+) -> list[CourseOfAction]:
+    mitigations = [
+        CourseOfAction(**G.nodes[source])
+        for source, target, data in G.edges(data=True)
+        if data.get("relationship_type") == "mitigates" and G.nodes[target].get("x_mitre_emb3d_threat_id") == threat_id
+    ]
 
-    Edge directions in the graph:
-      top-level-property ──► category
-      sub-property       ──► parent-property
-      property           ──► vulnerability  (relates-to)
+    mits = sorted(
+        mitigations,
+        key=lambda v: int(v.x_mitre_emb3d_mitigation_id.split("-")[1]),
+    )
 
-    So vulnerabilities are *successors* of property nodes, not ancestors of
-    the category.  The traversal is therefore:
-      1. Collect all emb3d-property nodes that are ancestors of ``category``
-         (i.e. top-level properties and sub-properties whose chain leads to it).
-      2. Walk each property's successors and keep vulnerability nodes.
+    return mits
 
-    Args:
-        G: The directed graph built by :func:`build_split_graph`.
-        category: The category node label, e.g. ``"Hardware"``.
 
-    Returns:
-        A deduplicated list of vulnerability node IDs.
-    """
+def get_vulnerabilities_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Vulnerability]:
     if category not in G:
         raise ValueError(
             f"Category '{category}' not found in graph. "
-            f"Valid categories: {[n for n, d in G.nodes(data=True) if d.get('object_type') == 'category']}"
+            f"Valid categories: {[n for n, d in G.nodes(data=True) if d.get('type') == 'category']}"
         )
 
-    property_nodes = {
-        n for n in nx.ancestors(G, category) if G.nodes[n].get("object_type") == str(ObjectType.EMB3D_PROPERTY)
-    }
+    property_nodes = {n for n in nx.ancestors(G, category) if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)}
 
     seen: set[str] = set()
-    result: list[str] = []
+    result: list[Vulnerability] = []
     for prop in property_nodes:
         for successor in G.successors(prop):
-            if successor not in seen and G.nodes[successor].get("object_type") == str(ObjectType.VULNERABILITY):
+            if successor not in seen and G.nodes[successor].get("type") == str(ObjectType.VULNERABILITY):
                 seen.add(successor)
-                result.append(successor)
+                result.append(Vulnerability(**G.nodes[successor]))
 
-    return result
+    vulns = sorted(
+        result,
+        key=lambda v: int(v.x_mitre_emb3d_threat_id.split("-")[1]),
+    )
+
+    return vulns
 
 
-def get_properties_by_category(G: nx.DiGraph, category: str) -> list[str]:
+def get_properties_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Emb3dProperty]:
     """Return top-level property node IDs that point to the given category."""
     if category not in G:
         raise ValueError(
             f"Category '{category}' not found in graph. "
-            f"Valid categories: {[n for n, d in G.nodes(data=True) if d.get('object_type') == 'category']}"
+            f"Valid categories: {[n for n, d in G.nodes(data=True) if d.get('type') == 'category']}"
         )
-    return [n for n in G.predecessors(category) if G.nodes[n].get("object_type") == str(ObjectType.EMB3D_PROPERTY)]
+    return [
+        Emb3dProperty(**G.nodes[n])
+        for n in G.predecessors(category)
+        if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
+    ]
 
 
-def get_subproperties(G: nx.DiGraph, property_node: str) -> list[str]:
+def get_subproperties(G: nx.DiGraph, property_node: Emb3dProperty) -> list[Emb3dProperty]:
     """Return sub-property node IDs that point to the given property node."""
-    return [n for n in G.predecessors(property_node) if G.nodes[n].get("object_type") == str(ObjectType.EMB3D_PROPERTY)]
+    return [
+        Emb3dProperty(**G.nodes[n])
+        for n in G.predecessors(property_node.id)
+        if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
+    ]
 
 
 def write_graphml(G: nx.DiGraph, output_path: Path) -> None:
     """Write the graph to a GraphML file."""
     nx.write_graphml(G, output_path)
+
+
+def make_default_heatmap(G: nx.DiGraph, name: str, description: str) -> ThreatHeatMap:
+    heatmap = ThreatHeatMap(
+        name=name,
+        description=description,
+    )
+
+    heatmap.hardware = [
+        ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
+        for v in get_vulnerabilities_by_category(G, Emb3dCategory.HARDWARE)
+    ]
+
+    heatmap.system_software = [
+        ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
+        for v in get_vulnerabilities_by_category(G, Emb3dCategory.SYSTEM_SW)
+    ]
+
+    heatmap.application_software = [
+        ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
+        for v in get_vulnerabilities_by_category(G, Emb3dCategory.APP_SW)
+    ]
+
+    heatmap.networking = [
+        ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
+        for v in get_vulnerabilities_by_category(G, Emb3dCategory.NETWORKING)
+    ]
+
+    return heatmap

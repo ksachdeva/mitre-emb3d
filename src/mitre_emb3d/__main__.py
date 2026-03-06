@@ -2,7 +2,6 @@ import json
 import logging
 import sys
 from pathlib import Path
-from re import L
 from typing import Annotated, Any, List, cast
 
 import typer
@@ -14,13 +13,15 @@ from mitre_emb3d import __version__
 from mitre_emb3d._doc_loaders import from_release
 from mitre_emb3d._graph import (
     build_split_graph,
+    get_mitigations,
     get_properties_by_category,
     get_subproperties,
     get_vulnerabilities_by_category,
+    make_default_heatmap,
     write_graphml,
 )
 from mitre_emb3d._locations import cache_directory
-from mitre_emb3d._models import Emb3dCategory, ObjectType
+from mitre_emb3d._models import Emb3dCategory, ObjectType, ThreatHeatMap, ThreatResolution, ThreatState
 from mitre_emb3d._models import StixBundle as ST
 from mitre_emb3d._types import CmdState
 
@@ -95,7 +96,7 @@ def categories(ctx: typer.Context) -> None:
 
 
 @cli_app.command()
-def get_properties(
+def properties(
     ctx: typer.Context,
     category: Emb3dCategory,
     level: Annotated[
@@ -108,83 +109,47 @@ def get_properties(
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
-    def _sort_key(node_id: str) -> int:
-        pid = G.nodes[node_id].get("x_mitre_emb3d_property_id", "PID-0")
-        return int(pid.split("-")[1])
-
-    def build_node(node_id: str, current_depth: int) -> dict:
-        props = G.nodes[node_id]
-        entry: dict[str, Any] = {
-            "id": props.get("x_mitre_emb3d_property_id"),
-            "name": props.get("name"),
-        }
-        if current_depth < level:
-            subs = sorted(get_subproperties(G, node_id), key=_sort_key)
-            if subs:
-                entry["subproperties"] = [build_node(s, current_depth + 1) for s in subs]
-        return entry
-
-    top_level = sorted(get_properties_by_category(G, category), key=_sort_key)
-    result = [build_node(node_id, current_depth=1) for node_id in top_level]
+    device_properties = get_properties_by_category(G, category)
 
     if state.pprint:
-
-        def print_tree(entry: dict[str, Any], indent: int) -> None:
-            prefix = "  " * indent + "- "
-            rprint(f"{prefix}{entry['id']}: {entry['name']}")
-            for sub in entry.get("subproperties", []):
-                print_tree(sub, indent + 1)
-
-        for entry in result:
-            print_tree(entry, indent=0)
+        for v in device_properties:
+            rprint(f"- {v.x_mitre_emb3d_property_id}: {v.name}")
     else:
+        result = [{"id": v.x_mitre_emb3d_property_id, "name": v.name} for v in device_properties]
         sys.stdout.write(json.dumps(result, indent=None))
 
 
 @cli_app.command()
-def get_threats(ctx: typer.Context, category: Emb3dCategory) -> None:
+def threats(ctx: typer.Context, category: Emb3dCategory) -> None:
     "List of threats for a certain category"
 
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
     vulnerabilities = get_vulnerabilities_by_category(G, category)
-    vulns = sorted(
-        (G.nodes[v] for v in vulnerabilities),
-        key=lambda v: int(v.get("x_mitre_emb3d_threat_id", "TID-0").split("-")[1]),
-    )
 
     if state.pprint:
-        for v in vulns:
-            rprint(f"- {v.get('x_mitre_emb3d_threat_id')}: {v.get('name')}")
+        for v in vulnerabilities:
+            rprint(f"- {v.x_mitre_emb3d_threat_id}: {v.name}")
     else:
-        result = [{"id": v.get("x_mitre_emb3d_threat_id"), "name": v.get("name")} for v in vulns]
+        result = [{"id": v.x_mitre_emb3d_threat_id, "name": v.name} for v in vulnerabilities]
         sys.stdout.write(json.dumps(result, indent=None))
 
 
 @cli_app.command()
-def get_mitigations(ctx: typer.Context, threat_id: str) -> None:
+def mitigations(ctx: typer.Context, threat_id: str) -> None:
     "List of mitigations for a certain threat"
 
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
-    mitigations = [
-        G.nodes[source]
-        for source, target, data in G.edges(data=True)
-        if data.get("relationship_type") == "mitigates" and G.nodes[target].get("x_mitre_emb3d_threat_id") == threat_id
-    ]
-
-    mitigs = sorted(
-        mitigations,
-        key=lambda m: int(m.get("x_mitre_emb3d_mitigation_id", "MID-0").split("-")[1]),
-    )
+    mitigations = get_mitigations(G, threat_id)
 
     if state.pprint:
-        for m in mitigs:
-            rprint(f"- {m.get('x_mitre_emb3d_mitigation_id')}: {m.get('name')}")
+        for m in mitigations:
+            rprint(f"- {m.x_mitre_emb3d_mitigation_id}: {m.name}")
     else:
-        result = [{"id": m.get("x_mitre_emb3d_mitigation_id"), "name": m.get("name")} for m in mitigs]
+        result = [{"id": m.x_mitre_emb3d_mitigation_id, "name": m.name} for m in mitigations]
         sys.stdout.write(json.dumps(result, indent=None))
 
 
@@ -199,3 +164,37 @@ def serialize_graph(
     G = state.graph
 
     write_graphml(G, output)
+
+
+@cli_app.command()
+def update_heatmap(
+    ctx: typer.Context,
+    category: Annotated[Emb3dCategory, typer.Argument(help="Category to update heatmap for")],
+    threat_id: Annotated[
+        str,
+        typer.Argument(help="Threat ID to update (e.g. TID-123)"),
+    ],
+    threat_resolution: Annotated[ThreatResolution, typer.Argument()],
+    heatmap_file: Annotated[Path, typer.Argument(help="Path to the heatmap JSON file")] = Path(
+        "mitr-emb3d-heatmap.json"
+    ),
+) -> None:
+    """Update the heatmap JSON file with the latest threat states from the graph."""
+
+    state = cast(CmdState, ctx.obj)
+    G = state.graph
+
+    # check if the file exists, if not create an empty heatmap
+    if heatmap_file.exists():
+        heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
+    else:
+        heatmap_data = make_default_heatmap(G, name="No name", description="No description")
+
+    # check for this category the threat_id exists in the graph
+    vulnerabilities = get_vulnerabilities_by_category(G, category)
+    if not any(v.x_mitre_emb3d_threat_id == threat_id for v in vulnerabilities):
+        raise ValueError(f"Threat ID '{threat_id}' not found in category '{category}'")
+
+    heatmap_data.update_threat_state(category, threat_id, threat_resolution)
+
+    heatmap_file.write_text(heatmap_data.model_dump_json(indent=2))
