@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+from pathlib import Path
 from typing import Annotated, Any, List, cast
 
 import typer
@@ -22,6 +23,7 @@ from mitre_emb3d._locations import cache_directory
 from mitre_emb3d._models import Emb3dCategory
 from mitre_emb3d._models import StixBundle as ST
 from mitre_emb3d._types import CmdState
+from mitre_emb3d.tui._app import MEDApp
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -168,3 +170,13 @@ def mitigations(ctx: typer.Context, threat_id: str) -> None:
     else:
         result = [{"id": m.x_mitre_emb3d_mitigation_id, "name": m.name} for m in mitigations]
         sys.stdout.write(json.dumps(result, indent=None))
+
+
+@cli_app.command()
+def tui(ctx: typer.Context, heatmap_file: Path) -> None:
+    "Launch the TUI heatmap viewer for a given heatmap file"
+
+    state = cast(CmdState, ctx.obj)
+
+    app = MEDApp(state.graph, heatmap_file)
+    app.run()
