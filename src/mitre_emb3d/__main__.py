@@ -122,7 +122,7 @@ def properties(
         typer.Option(help="Depth of sub-properties to include (1 = top-level only, 2 = include sub-properties, etc.)"),
     ] = 1,
 ) -> None:
-    """Get list of properties for a certain category"""
+    """List properties for a certain category"""
 
     state = cast(CmdState, ctx.obj)
     G = state.graph
@@ -138,7 +138,7 @@ def properties(
 
 @cli_app.command()
 def threats(ctx: typer.Context, category: Emb3dCategory) -> None:
-    "List of threats for a certain category"
+    "List threats for a certain category"
 
     state = cast(CmdState, ctx.obj)
     G = state.graph
@@ -155,7 +155,7 @@ def threats(ctx: typer.Context, category: Emb3dCategory) -> None:
 
 @cli_app.command()
 def mitigations(ctx: typer.Context, threat_id: str) -> None:
-    "List of mitigations for a certain threat"
+    "List mitigations for a certain threat"
 
     state = cast(CmdState, ctx.obj)
     G = state.graph

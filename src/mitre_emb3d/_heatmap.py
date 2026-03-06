@@ -11,7 +11,7 @@ from mitre_emb3d._models import Emb3dCategory, ThreatHeatMap, ThreatResolution, 
 from mitre_emb3d._models import StixBundle as ST
 from mitre_emb3d._types import CmdState
 
-heatmap_app = Typer(name="heatmap", help="Commands related to heatmap generation and updates")
+heatmap_app = Typer(name="heatmap", help="Heatmap related commands")
 
 
 @heatmap_app.command(name="init")
@@ -39,7 +39,7 @@ def init_heatmap(
 @heatmap_app.command(name="read")
 def read_heatmap(
     ctx: typer.Context,
-    category: Annotated[Emb3dCategory, typer.Argument(help="Category to update heatmap for")],
+    category: Annotated[Emb3dCategory, typer.Argument(help="Category to list threat states for")],
     heatmap_file: Annotated[
         Path,
         typer.Option(
@@ -50,7 +50,7 @@ def read_heatmap(
         ),
     ],
 ) -> None:
-    """Read the Heatmap JSON file and print the threat states for the given category."""
+    """List the threat states for the given category."""
 
     heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
 
@@ -71,7 +71,7 @@ def read_heatmap(
 @heatmap_app.command(name="update")
 def update_heatmap(
     ctx: typer.Context,
-    category: Annotated[Emb3dCategory, typer.Argument(help="Category to update heatmap for")],
+    category: Annotated[Emb3dCategory, typer.Argument(help="Category to update the threat state for")],
     threat_id: Annotated[
         str,
         typer.Argument(help="Threat ID to update (e.g. TID-123)"),
