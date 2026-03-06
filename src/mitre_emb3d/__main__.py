@@ -119,7 +119,7 @@ def properties(
     category: Emb3dCategory,
     level: Annotated[
         int,
-        typer.Option(help="Depth of sub-properties to include (1 = top-level only, 2 = include sub-properties, etc.)"),
+        typer.Option(help="Depth of sub-properties to include (1,2,3 ...)"),
     ] = 1,
 ) -> None:
     """List properties for a certain category"""
