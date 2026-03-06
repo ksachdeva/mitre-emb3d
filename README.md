@@ -10,6 +10,13 @@ A CLI for https://emb3d.mitre.org/
 uvx mitre-emb3d --help
 ```
 
+or
+
+```bash
+uvx --from mitre-emb3d med --help
+uvx --from mitre-emb3d med --pprint properties Networking --level 3
+```
+
 ### Install as a tool
 
 ```bash

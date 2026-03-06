@@ -1,7 +1,7 @@
 [project]
 name = "mitre-emb3d"
 version = "0.1.0"
-description = "MITRE EMB3D: A Python library for working with the MITRE EMB3D framework."
+description = "MITRE EMB3D: Library & CLI for working with the MITRE EMB3D framework."
 readme = "README.md"
 authors = [
     { name = "Sachdeva, Kapil"}
