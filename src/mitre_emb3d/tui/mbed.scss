@@ -23,3 +23,43 @@ ThreatLegend {
     border-top: solid $primary;
     padding: 0 2;
 }
+
+#heatmap-scroll {
+    height: 1fr;
+}
+
+#heatmap-grid {
+    width: 100%;
+    height: auto;
+}
+
+.heatmap-column {
+    width: 1fr;
+    height: auto;
+    border: solid $primary;
+}
+
+.column-header {
+    text-align: center;
+    text-style: bold;
+    height: 3;
+    content-align: center middle;
+    border-bottom: solid $primary;
+    background: $surface;
+}
+
+ThreatEntry {
+    width: 100%;
+    height: 1;
+    content-align: center middle;
+}
+
+ThreatEntry:hover {
+    text-style: bold reverse;
+}
+
+ThreatEntry.not-investigated         { background: #888888; }
+ThreatEntry.na                       { background: #4488cc; }
+ThreatEntry.mitigated                { background: #44aa44; }
+ThreatEntry.vulnerable               { background: #cc4444; }
+ThreatEntry.conditionally-mitigated  { background: #cc8844; }

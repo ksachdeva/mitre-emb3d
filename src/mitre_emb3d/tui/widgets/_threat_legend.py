@@ -4,22 +4,7 @@ from textual.widgets import Label, Static
 
 from mitre_emb3d._models import ThreatResolution
 
-# Maps each resolution to a CSS class name and a display colour
-_RESOLUTION_CSS: dict[ThreatResolution, str] = {
-    ThreatResolution.NOT_INVESTIGATED: "not-investigated",
-    ThreatResolution.NA: "na",
-    ThreatResolution.MITIGATED: "mitigated",
-    ThreatResolution.VULNERABLE: "vulnerable",
-    ThreatResolution.CONDITIONALLY_MITIGATED: "conditionally-mitigated",
-}
-
-_RESOLUTION_LABEL: dict[ThreatResolution, str] = {
-    ThreatResolution.NOT_INVESTIGATED: "Not Investigated",
-    ThreatResolution.NA: "N/A",
-    ThreatResolution.MITIGATED: "Mitigated",
-    ThreatResolution.VULNERABLE: "Vulnerable",
-    ThreatResolution.CONDITIONALLY_MITIGATED: "Cond. Mitigated",
-}
+from ._resolution import RESOLUTION_CSS, RESOLUTION_LABEL
 
 
 class ThreatLegendItem(Horizontal):
@@ -31,9 +16,9 @@ class ThreatLegendItem(Horizontal):
 
     def compose(self) -> ComposeResult:
         swatch = Static(" ")
-        swatch.add_class("threat-legend-swatch", _RESOLUTION_CSS[self._resolution])
+        swatch.add_class("threat-legend-swatch", RESOLUTION_CSS[self._resolution])
         yield swatch
-        yield Label(_RESOLUTION_LABEL[self._resolution])
+        yield Label(RESOLUTION_LABEL[self._resolution])
 
 
 class ThreatLegend(Horizontal):
