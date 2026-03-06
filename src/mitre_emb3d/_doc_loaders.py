@@ -13,10 +13,11 @@ def from_json(json_path: Path) -> StixBundle:
     return StixBundle.model_validate_json(json_path.read_text())
 
 
-def from_release(release: str) -> StixBundle:
+def download_release(release: str, output_path: Path) -> None:
+    """Downloads the STIX bundle for a specific release from the MITRE EMB3D website."""
     _LOGGER.info(f"Fetching documentation for release {release} ...")
 
     url = f"https://emb3d.mitre.org/assets/emb3d-stix-{release}.json"
     response = httpx.get(url)
     response.raise_for_status()  # Ensure we got a successful response
-    return StixBundle.model_validate_json(response.text)
+    output_path.write_text(response.text)

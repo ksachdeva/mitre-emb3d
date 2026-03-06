@@ -10,7 +10,7 @@ from rich import print as rprint
 from typer import Typer
 
 from mitre_emb3d import __version__
-from mitre_emb3d._doc_loaders import from_release
+from mitre_emb3d._doc_loaders import download_release
 from mitre_emb3d._graph import (
     build_split_graph,
     get_mitigations,
@@ -58,7 +58,6 @@ def main(
         ),
     ] = "warning",
     pprint: Annotated[bool, typer.Option(help="Whether to pretty-print the output (e.g. JSON lists)")] = False,
-    cache: Annotated[bool, typer.Option(help="Whether to cache the emb3d-stix.json file for future use")] = True,
 ) -> None:
     logging.basicConfig(level=LOG_LEVELS.get(loglevel, logging.WARNING))
     logging.getLogger("mitre_emb3d").setLevel(LOG_LEVELS.get(loglevel, logging.WARNING))
@@ -66,12 +65,11 @@ def main(
     # cache file_name
     file_name = cache_directory().joinpath(f"emb3d-stix-{release}.json")
 
-    if file_name.exists() and cache:
-        _LOGGER.info(f"Loading emb3d-stix-{release}.json from cache ...")
-        bundle_doc = ST.model_validate_json(file_name.read_text())
-    else:
-        bundle_doc = from_release(release)
-        file_name.write_text(bundle_doc.model_dump_json())
+    if not file_name.exists():
+        download_release(release, file_name)
+
+    _LOGGER.info(f"Loading emb3d-stix-{release}.json from cache ...")
+    bundle_doc = ST.model_validate_json(file_name.read_text())
 
     ctx.ensure_object(CmdState)
     ctx.obj = CmdState()
