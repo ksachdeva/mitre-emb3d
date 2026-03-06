@@ -1,1 +1,60 @@
 # MITRE EMB3D
+
+A CLI for https://emb3d.mitre.org/
+
+## Run
+
+### Via `uvx`
+
+```bash
+uvx mitre-emb3d --help
+```
+
+### Install as a tool
+
+```bash
+uv tool install mitre-emb3d
+```
+
+## Add to your project
+
+```bash
+uv add mitre-emb3d --dev
+```
+
+and then run the cli via
+
+```bash
+uv run med --help
+```
+
+or
+
+```bash
+uv run mitre-emb3d --help
+```
+
+## Features
+
+```markdown
+uv run med --help
+
+Usage: med [OPTIONS] COMMAND [ARGS]...
+
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --release                                TEXT  2.0.1, 2.0 ... [default: 2.0.1]                                                                                                           │
+│ --loglevel            -l                 TEXT  Set the logging level (debug, info, warning, error, critical) [default: warning]                                                          │
+│ --pprint                  --no-pprint          Whether to pretty-print the output (e.g. JSON lists) [default: no-pprint]                                                                 │
+│ --install-completion                           Install completion for the current shell.                                                                                                 │
+│ --show-completion                              Show completion for the current shell, to copy it or customize the installation.                                                          │
+│ --help                                         Show this message and exit.                                                                                                               │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ categories   List the categories                                                                                                                                                         │
+│ properties   List properties for a certain category                                                                                                                                      │
+│ threats      List threats for a certain category                                                                                                                                         │
+│ mitigations  List mitigations for a certain threat                                                                                                                                       │
+│ heatmap      Heatmap related commands                                                                                                                                                    │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+```
