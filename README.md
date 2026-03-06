@@ -36,6 +36,30 @@ uv run mitre-emb3d --help
 
 ## Features
 
+```bash
+$ uv run med --pprint threats "Networking"
+- TID-221: Authentication Bypass By Message Replay
+- TID-222: Critical System Service May Be Disabled
+- TID-310: Remotely Accessible Unauthenticated Services
+- TID-316: Incorrect Certificate Verification Allows Authentication Bypass
+- TID-317: Predictable Cryptographic Key
+- TID-318: Insecure Cryptographic Implementation
+- TID-401: Undocumented Protocol Features
+- TID-404: Remotely Triggerable Deadlock/DoS
+- TID-405: Network Stack Resource Exhaustion
+- TID-406: Unauthorized Messages or Connections
+- TID-407: Missing Message Replay Protection
+- TID-408: Unencrypted Sensitive Data Communication
+- TID-410: Cryptographic Protocol Side Channel
+- TID-411: Weak/Insecure Cryptographic Protocol
+- TID-412: Network Routing Capability Abuse
+```
+
+***Explore other commands using the CLI help***
+
+> Note --pprint (default is OFF, default output is JSON) for display
+
+
 ```markdown
 uv run med --help
 
