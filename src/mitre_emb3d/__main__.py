@@ -21,7 +21,7 @@ from mitre_emb3d._graph import (
     write_graphml,
 )
 from mitre_emb3d._locations import cache_directory
-from mitre_emb3d._models import Emb3dCategory, ThreatHeatMap, ThreatResolution
+from mitre_emb3d._models import Emb3dCategory, ThreatHeatMap, ThreatResolution, ThreatState
 from mitre_emb3d._models import StixBundle as ST
 from mitre_emb3d._types import CmdState
 
@@ -208,6 +208,38 @@ def init_heatmap(
     output_dir.mkdir(parents=True, exist_ok=True)
     heatmap_file = output_dir / "mitr-emb3d-heatmap.json"
     heatmap_file.write_text(heatmap.model_dump_json(indent=2))
+
+
+@heatmap_app.command(name="read")
+def read_heatmap(
+    ctx: typer.Context,
+    category: Annotated[Emb3dCategory, typer.Argument(help="Category to update heatmap for")],
+    heatmap_file: Annotated[
+        Path,
+        typer.Option(
+            help="Path to the heatmap JSON file",
+            file_okay=True,
+            dir_okay=False,
+            exists=True,
+        ),
+    ],
+) -> None:
+    """Read the Heatmap JSON file and print the threat states for the given category."""
+
+    heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
+
+    category_map = {
+        Emb3dCategory.NETWORKING: heatmap_data.networking,
+        Emb3dCategory.SYSTEM_SW: heatmap_data.system_software,
+        Emb3dCategory.APP_SW: heatmap_data.application_software,
+        Emb3dCategory.HARDWARE: heatmap_data.hardware,
+    }
+
+    threats = category_map.get(category, [])
+
+    adapter = TypeAdapter(List[ThreatState])
+
+    sys.stdout.write(adapter.dump_json(threats, indent=0).decode("utf-8"))
 
 
 @heatmap_app.command(name="update")
