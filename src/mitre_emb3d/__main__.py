@@ -1,7 +1,6 @@
 import json
 import logging
 import sys
-from pathlib import Path
 from typing import Annotated, Any, List, cast
 
 import typer
@@ -17,7 +16,6 @@ from mitre_emb3d._graph import (
     get_properties_by_category,
     get_subproperties,
     get_threats_by_category,
-    write_graphml,
 )
 from mitre_emb3d._heatmap import heatmap_app
 from mitre_emb3d._locations import cache_directory
@@ -170,16 +168,3 @@ def mitigations(ctx: typer.Context, threat_id: str) -> None:
     else:
         result = [{"id": m.x_mitre_emb3d_mitigation_id, "name": m.name} for m in mitigations]
         sys.stdout.write(json.dumps(result, indent=None))
-
-
-@cli_app.command()
-def serialize_graph(
-    ctx: typer.Context,
-    output: Annotated[Path, typer.Argument(help="Output file path to save the serialized graph (e.g. graph.graphml)")],
-) -> None:
-    """Serialize the graph to a GraphML file."""
-
-    state = cast(CmdState, ctx.obj)
-    G = state.graph
-
-    write_graphml(G, output)
