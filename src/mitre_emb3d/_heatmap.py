@@ -6,7 +6,7 @@ import typer
 from pydantic import TypeAdapter
 from typer import Typer
 
-from mitre_emb3d._graph import get_vulnerabilities_by_category, make_default_heatmap
+from mitre_emb3d._graph import get_threats_by_category, make_default_heatmap
 from mitre_emb3d._models import Emb3dCategory, ThreatHeatMap, ThreatResolution, ThreatState
 from mitre_emb3d._models import StixBundle as ST
 from mitre_emb3d._types import CmdState
@@ -95,8 +95,8 @@ def update_heatmap(
     heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
 
     # check for this category the threat_id exists in the graph
-    vulnerabilities = get_vulnerabilities_by_category(G, category)
-    if not any(v.x_mitre_emb3d_threat_id == threat_id for v in vulnerabilities):
+    threats = get_threats_by_category(G, category)
+    if not any(v.x_mitre_emb3d_threat_id == threat_id for v in threats):
         raise ValueError(f"Threat ID '{threat_id}' not found in category '{category}'")
 
     heatmap_data.update_threat_state(category, threat_id, threat_resolution)

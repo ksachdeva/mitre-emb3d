@@ -48,7 +48,7 @@ class Relationship(BaseModel):
         }
 
 
-class Vulnerability(BaseModel):
+class Threat(BaseModel):
     id: str
     type: Literal[ObjectType.VULNERABILITY]
     name: str
@@ -112,7 +112,7 @@ class Emb3dProperty(BaseModel):
         return result
 
 
-class CourseOfAction(BaseModel):
+class Mitigation(BaseModel):
     id: str
     type: Literal[ObjectType.COURSE_OF_ACTION]
     name: str
@@ -139,7 +139,7 @@ class CourseOfAction(BaseModel):
 
 
 StixObject = Annotated[
-    Union[Identity, Relationship, Vulnerability, Emb3dProperty, CourseOfAction],
+    Union[Identity, Relationship, Threat, Emb3dProperty, Mitigation],
     Field(discriminator="type"),
 ]
 

@@ -16,7 +16,7 @@ from mitre_emb3d._graph import (
     get_mitigations,
     get_properties_by_category,
     get_subproperties,
-    get_vulnerabilities_by_category,
+    get_threats_by_category,
     write_graphml,
 )
 from mitre_emb3d._heatmap import heatmap_app
@@ -147,13 +147,13 @@ def threats(ctx: typer.Context, category: Emb3dCategory) -> None:
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
-    vulnerabilities = get_vulnerabilities_by_category(G, category)
+    threats = get_threats_by_category(G, category)
 
     if state.pprint:
-        for v in vulnerabilities:
+        for v in threats:
             rprint(f"- {v.x_mitre_emb3d_threat_id}: {v.name}")
     else:
-        result = [{"id": v.x_mitre_emb3d_threat_id, "name": v.name} for v in vulnerabilities]
+        result = [{"id": v.x_mitre_emb3d_threat_id, "name": v.name} for v in threats]
         sys.stdout.write(json.dumps(result, indent=None))
 
 

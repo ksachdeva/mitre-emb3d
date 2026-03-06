@@ -5,15 +5,15 @@ from pathlib import Path
 import networkx as nx
 
 from ._models import (
-    CourseOfAction,
     Emb3dCategory,
     Emb3dProperty,
+    Mitigation,
     ObjectType,
     StixBundle,
+    Threat,
     ThreatHeatMap,
     ThreatResolution,
     ThreatState,
-    Vulnerability,
 )
 
 
@@ -104,9 +104,9 @@ def build_split_graph(bundle_doc: StixBundle) -> nx.DiGraph:
 def get_mitigations(
     G: nx.DiGraph,
     threat_id: str,
-) -> list[CourseOfAction]:
+) -> list[Mitigation]:
     mitigations = [
-        CourseOfAction(**G.nodes[source])
+        Mitigation(**G.nodes[source])
         for source, target, data in G.edges(data=True)
         if data.get("relationship_type") == "mitigates" and G.nodes[target].get("x_mitre_emb3d_threat_id") == threat_id
     ]
@@ -119,7 +119,7 @@ def get_mitigations(
     return mits
 
 
-def get_vulnerabilities_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Vulnerability]:
+def get_threats_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Threat]:
     if category not in G:
         raise ValueError(
             f"Category '{category}' not found in graph. "
@@ -129,12 +129,12 @@ def get_vulnerabilities_by_category(G: nx.DiGraph, category: Emb3dCategory) -> l
     property_nodes = {n for n in nx.ancestors(G, category) if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)}
 
     seen: set[str] = set()
-    result: list[Vulnerability] = []
+    result: list[Threat] = []
     for prop in property_nodes:
         for successor in G.successors(prop):
             if successor not in seen and G.nodes[successor].get("type") == str(ObjectType.VULNERABILITY):
                 seen.add(successor)
-                result.append(Vulnerability(**G.nodes[successor]))
+                result.append(Threat(**G.nodes[successor]))
 
     vulns = sorted(
         result,
@@ -187,22 +187,22 @@ def make_default_heatmap(G: nx.DiGraph, name: str, description: str) -> ThreatHe
 
     heatmap.hardware = [
         ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
-        for v in get_vulnerabilities_by_category(G, Emb3dCategory.HARDWARE)
+        for v in get_threats_by_category(G, Emb3dCategory.HARDWARE)
     ]
 
     heatmap.system_software = [
         ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
-        for v in get_vulnerabilities_by_category(G, Emb3dCategory.SYSTEM_SW)
+        for v in get_threats_by_category(G, Emb3dCategory.SYSTEM_SW)
     ]
 
     heatmap.application_software = [
         ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
-        for v in get_vulnerabilities_by_category(G, Emb3dCategory.APP_SW)
+        for v in get_threats_by_category(G, Emb3dCategory.APP_SW)
     ]
 
     heatmap.networking = [
         ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
-        for v in get_vulnerabilities_by_category(G, Emb3dCategory.NETWORKING)
+        for v in get_threats_by_category(G, Emb3dCategory.NETWORKING)
     ]
 
     return heatmap
