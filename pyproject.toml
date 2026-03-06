@@ -11,7 +11,6 @@ dependencies = [
     "httpx>=0.28.1",
     "networkx>=3.6.1",
     "pydantic>=2.12.5",
-    "stix2>=3.0.2",
     "typer>=0.16.0",
     "xdg-base-dirs>=6.0.2",
 ]
