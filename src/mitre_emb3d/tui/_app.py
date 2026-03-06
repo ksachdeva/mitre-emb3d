@@ -44,12 +44,13 @@ class MEDApp(App[None]):
                     yield Static("System\nSoftware", classes="column-header")
                     for state in self._heatmap.system_software:
                         yield ThreatEntry(state)
-                with Vertical(classes="heatmap-column"):
-                    yield Static("Application\nSoftware", classes="column-header")
-                    for state in app_sw[:mid]:
-                        yield ThreatEntry(state)
-                with Vertical(classes="heatmap-column"):
-                    yield Static("", classes="column-header")
-                    for state in app_sw[mid:]:
-                        yield ThreatEntry(state)
+                with Vertical(classes="heatmap-column-wide"):
+                    yield Static("Application Software", classes="column-header")
+                    with Horizontal(classes="app-sw-columns"):
+                        with Vertical(classes="app-sw-sub"):
+                            for state in app_sw[:mid]:
+                                yield ThreatEntry(state)
+                        with Vertical(classes="app-sw-sub"):
+                            for state in app_sw[mid:]:
+                                yield ThreatEntry(state)
         yield Footer()

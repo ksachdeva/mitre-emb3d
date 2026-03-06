@@ -39,6 +39,22 @@ ThreatLegend {
     border: solid $primary;
 }
 
+.heatmap-column-wide {
+    width: 2fr;
+    height: auto;
+    border: solid $primary;
+}
+
+.app-sw-columns {
+    width: 100%;
+    height: auto;
+}
+
+.app-sw-sub {
+    width: 1fr;
+    height: auto;
+}
+
 .column-header {
     text-align: center;
     text-style: bold;
