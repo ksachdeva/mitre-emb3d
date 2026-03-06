@@ -95,6 +95,27 @@ def categories(ctx: typer.Context) -> None:
     sys.stdout.write(adapter.dump_json(the_categories, indent=0).decode("utf-8"))
 
 
+def _collect_properties_json(G: Any, props: list, current_level: int, max_level: int) -> list[dict[str, Any]]:
+    result = []
+    for prop in props:
+        item: dict[str, Any] = {"id": prop.x_mitre_emb3d_property_id, "name": prop.name}
+        if current_level < max_level:
+            subs = get_subproperties(G, prop)
+            if subs:
+                item["subproperties"] = _collect_properties_json(G, subs, current_level + 1, max_level)
+        result.append(item)
+    return result
+
+
+def _print_properties_pprint(G: Any, props: list, current_level: int, max_level: int, indent: int = 0) -> None:
+    for prop in props:
+        rprint(f"{'  ' * indent}- {prop.x_mitre_emb3d_property_id}: {prop.name}")
+        if current_level < max_level:
+            subs = get_subproperties(G, prop)
+            if subs:
+                _print_properties_pprint(G, subs, current_level + 1, max_level, indent + 1)
+
+
 @cli_app.command()
 def properties(
     ctx: typer.Context,
@@ -112,10 +133,9 @@ def properties(
     device_properties = get_properties_by_category(G, category)
 
     if state.pprint:
-        for v in device_properties:
-            rprint(f"- {v.x_mitre_emb3d_property_id}: {v.name}")
+        _print_properties_pprint(G, device_properties, 1, level)
     else:
-        result = [{"id": v.x_mitre_emb3d_property_id, "name": v.name} for v in device_properties]
+        result = _collect_properties_json(G, device_properties, 1, level)
         sys.stdout.write(json.dumps(result, indent=None))
 
 

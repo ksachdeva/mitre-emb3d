@@ -160,9 +160,16 @@ def get_properties_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[E
 
 def get_subproperties(G: nx.DiGraph, property_node: Emb3dProperty) -> list[Emb3dProperty]:
     """Return sub-property node IDs that point to the given property node."""
+    # Graph nodes use remapped keys (e.g. "emb3d-property-1"), not the original STIX IDs
+    graph_node_key = next(
+        (n for n, d in G.nodes(data=True) if d.get("id") == property_node.id),
+        None,
+    )
+    if graph_node_key is None:
+        return []
     return [
         Emb3dProperty(**G.nodes[n])
-        for n in G.predecessors(property_node.id)
+        for n in G.predecessors(graph_node_key)
         if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
     ]
 
