@@ -22,6 +22,8 @@ class MEDApp(App[None]):
         self._graph = graph
         self._heatmap_file = heatmap_file
         self._heatmap = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
+        self.title = self._heatmap.name
+        self.sub_title = self._heatmap.description
 
     @property
     def graph(self) -> nx.DiGraph:
