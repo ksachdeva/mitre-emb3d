@@ -66,18 +66,7 @@ class Threat(BaseModel):
         return self.id
 
     def graph_props(self) -> dict[str, Any]:
-        return {
-            "id": self.id,
-            "type": str(ObjectType.VULNERABILITY),
-            "name": self.name,
-            "description": self.description,
-            "cves": self.cves,
-            "cwes": self.cwes,
-            "evidence": self.evidence,
-            "threat_id": self.threat_id,
-            "maturity": self.maturity,
-            "category": self.category,
-        }
+        return self.model_dump()
 
     def display(self) -> str:
         return f""" # {self.name}
@@ -122,20 +111,7 @@ class Emb3dProperty(BaseModel):
         return self.id
 
     def graph_props(self) -> dict[str, Any]:
-        result = {
-            "id": self.id,
-            "type": str(ObjectType.EMB3D_PROPERTY),
-            "name": self.name,
-            "category": self.category,
-        }
-
-        if self.is_subproperty is not None:
-            result["is_subproperty"] = str(self.is_subproperty)
-
-        if self.property_id is not None:
-            result["property_id"] = self.property_id
-
-        return result
+        return self.model_dump()
 
 
 class Mitigation(BaseModel):
@@ -154,16 +130,7 @@ class Mitigation(BaseModel):
         return self.id
 
     def graph_props(self) -> dict[str, Any]:
-        return {
-            "id": self.id,
-            "name": self.name,
-            "type": str(ObjectType.COURSE_OF_ACTION),
-            "description": self.description,
-            "iec_62443_mappings": self.iec_62443_mappings,
-            "mitigation_id": self.mitigation_id,
-            "maturity": self.maturity,
-            "references": self.references,
-        }
+        return self.model_dump()
 
     def display(self) -> str:
         return f"""# {self.name}
