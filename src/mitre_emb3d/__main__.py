@@ -83,7 +83,7 @@ def main(
 
 
 @cli_app.command()
-def categories(ctx: typer.Context) -> None:
+def list_categories(ctx: typer.Context) -> None:
     "List the categories"
 
     the_categories: List[str] = [
@@ -120,7 +120,7 @@ def _print_properties_pprint(G: Any, props: list, current_level: int, max_level:
 
 
 @cli_app.command()
-def properties(
+def list_properties(
     ctx: typer.Context,
     category: Emb3dCategory,
     level: Annotated[
@@ -143,7 +143,7 @@ def properties(
 
 
 @cli_app.command()
-def threats(ctx: typer.Context, category: Emb3dCategory) -> None:
+def list_threats(ctx: typer.Context, category: Emb3dCategory) -> None:
     "List threats for a certain category"
 
     state = cast(CmdState, ctx.obj)
@@ -160,7 +160,7 @@ def threats(ctx: typer.Context, category: Emb3dCategory) -> None:
 
 
 @cli_app.command()
-def mitigations(ctx: typer.Context, threat_id: str) -> None:
+def list_mitigations(ctx: typer.Context, threat_id: str) -> None:
     "List mitigations for a certain threat"
 
     state = cast(CmdState, ctx.obj)
