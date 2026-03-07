@@ -17,7 +17,7 @@ uvx --from mitre-emb3d med --help
 uvx --from mitre-emb3d med --pprint properties Networking --level 3
 ```
 
-### Install as a tool
+### Or, install as a tool
 
 ```bash
 uv tool install mitre-emb3d
@@ -89,3 +89,18 @@ Usage: med [OPTIONS] COMMAND [ARGS]...
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 ```
+
+## Heatmap TUI
+
+You can use TUI to inspect & edit the Heatmap
+
+```bash
+uvx mitre-emb3d tui mitr-emb3d-heatmap.json
+```
+
+
+![Heatmap TUI](assets/tui.svg)
+
+Clicking on Threat Entry will open a screen that presents a Form, Information about Threat & Mitigations
+
+![Heatmap TUI](assets/tui-dialog.svg)
