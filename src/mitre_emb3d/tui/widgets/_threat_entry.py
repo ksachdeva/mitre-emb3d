@@ -21,5 +21,12 @@ class ThreatEntry(Static):
         threat = get_threat_from_id(self.app.graph, self.threat_id)  # type: ignore
         self.tooltip = threat.name
 
+    def _refresh_display(self, _result: None) -> None:
+        label = f"{self._threat_state.threat_id} [{RESOLUTION_SHORT[self._threat_state.resolution]}]"
+        self.update(label)
+        for cls in RESOLUTION_CSS.values():
+            self.remove_class(cls)
+        self.add_class(RESOLUTION_CSS[self._threat_state.resolution])
+
     def on_click(self) -> None:
-        self.app.push_screen(ThreatModal(self._threat_state))
+        self.app.push_screen(ThreatModal(self._threat_state), callback=self._refresh_display)

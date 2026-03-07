@@ -29,6 +29,9 @@ class MEDApp(App[None]):
     def graph(self) -> nx.DiGraph:
         return self._graph
 
+    def save_heatmap(self) -> None:
+        self._heatmap_file.write_text(self._heatmap.model_dump_json(indent=2))
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield ThreatLegend()

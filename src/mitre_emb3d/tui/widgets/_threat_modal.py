@@ -52,12 +52,12 @@ class ThreatModal(ModalScreen[None]):
                     with VerticalScroll(id="mitigation-list"):
                         if self._threat_state.mitigations:
                             for mid in self._threat_state.mitigations:
-                                yield Checkbox(mid.mitigation_id, id=f"mitigation-{mid.mitigation_id}")
+                                yield Checkbox(mid.mitigation_id, mid.applied, id=f"mitigation-{mid.mitigation_id}")
                         else:
                             yield Static("No mitigations available.")
 
                     yield Label("Remarks")
-                    yield TextArea(id="remarks-area")
+                    yield TextArea(self._threat_state.notes, id="remarks-area")
 
                     with Horizontal(id="threat-modal-buttons"):
                         yield Button("Save", variant="primary", id="modal-save")
@@ -81,4 +81,17 @@ class ThreatModal(ModalScreen[None]):
                         yield Static("No mitigations available.")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "modal-save":
+            resolution_select = self.query_one("#resolution-select", Select)
+            self._threat_state.resolution = resolution_select.value
+
+            for mid in self._threat_state.mitigations:
+                checkbox = self.query_one(f"#mitigation-{mid.mitigation_id}", Checkbox)
+                mid.applied = checkbox.value
+
+            remarks_area = self.query_one("#remarks-area", TextArea)
+            self._threat_state.notes = remarks_area.text
+
+            self.app.save_heatmap()  # type: ignore
+
         self.dismiss(None)
