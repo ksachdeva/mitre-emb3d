@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Annotated, List, cast
+from typing import Annotated, List, Optional, cast
 
 import typer
 from pydantic import TypeAdapter
@@ -86,6 +86,17 @@ def update_heatmap(
             exists=True,
         ),
     ],
+    applied_mitigation: Annotated[
+        Optional[List[str]],
+        typer.Option(
+            "--am",
+            help="List of applied mitigation IDs (e.g. MID-001)",
+        ),
+    ] = None,
+    unapplied_mitigation: Annotated[
+        Optional[List[str]], typer.Option("--um", help="List of unapplied mitigation IDs (e.g. MID-002)")
+    ] = None,
+    notes: Annotated[Optional[str], typer.Option(help="Additional notes about the threat state")] = None,
 ) -> None:
     """Update the heatmap JSON file with the latest threat states from the graph."""
 
@@ -99,6 +110,13 @@ def update_heatmap(
     if not any(v.x_mitre_emb3d_threat_id == threat_id for v in threats):
         raise ValueError(f"Threat ID '{threat_id}' not found in category '{category}'")
 
-    heatmap_data.update_threat_state(category, threat_id, threat_resolution)
+    heatmap_data.update_threat_state(
+        category,
+        threat_id,
+        threat_resolution,
+        applied_mitigations=applied_mitigation,
+        unapplied_mitigations=unapplied_mitigation,
+        notes=notes,
+    )
 
     heatmap_file.write_text(heatmap_data.model_dump_json(indent=2))

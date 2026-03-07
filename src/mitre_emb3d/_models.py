@@ -157,9 +157,16 @@ class ThreatResolution(StrEnum):
     CONDITIONALLY_MITIGATED = "Conditionally-Mitigated"
 
 
+class MitigationState(BaseModel):
+    mitigation_id: str
+    applied: bool = False
+
+
 class ThreatState(BaseModel):
     threat_id: str
     resolution: ThreatResolution
+    mitigations: List[MitigationState] = Field(default_factory=list)
+    notes: str = ""
 
 
 class ThreatHeatMap(BaseModel):
@@ -182,6 +189,9 @@ class ThreatHeatMap(BaseModel):
         category: Emb3dCategory,
         threat_id: str,
         resolution: ThreatResolution,
+        notes: Optional[str] = None,
+        applied_mitigations: Optional[List[str]] = None,
+        unapplied_mitigations: Optional[List[str]] = None,
     ) -> None:
         category_map = {
             Emb3dCategory.NETWORKING: self.networking,
@@ -190,6 +200,31 @@ class ThreatHeatMap(BaseModel):
             Emb3dCategory.HARDWARE: self.hardware,
         }
         for threat in category_map.get(category, []):
-            if threat.threat_id == threat_id:
-                threat.resolution = resolution
-                return
+            if threat.threat_id != threat_id:
+                continue
+
+            threat.resolution = resolution
+            if notes is not None:
+                threat.notes = notes
+
+            if applied_mitigations is not None:
+                mitigation_ids = {mit.mitigation_id for mit in threat.mitigations}
+                invalid_applied = set(applied_mitigations) - mitigation_ids
+                if invalid_applied:
+                    raise ValueError(f"Invalid mitigation IDs in applied_mitigations: {invalid_applied}")
+
+                for mit in threat.mitigations:
+                    if mit.mitigation_id in applied_mitigations:
+                        mit.applied = True
+
+            if unapplied_mitigations is not None:
+                mitigation_ids = {mit.mitigation_id for mit in threat.mitigations}
+                invalid_unapplied = set(unapplied_mitigations) - mitigation_ids
+                if invalid_unapplied:
+                    raise ValueError(f"Invalid mitigation IDs in unapplied_mitigations: {invalid_unapplied}")
+
+                for mit in threat.mitigations:
+                    if mit.mitigation_id in unapplied_mitigations:
+                        mit.applied = False
+
+            return

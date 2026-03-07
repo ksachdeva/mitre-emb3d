@@ -8,6 +8,7 @@ from ._models import (
     Emb3dCategory,
     Emb3dProperty,
     Mitigation,
+    MitigationState,
     ObjectType,
     StixBundle,
     Threat,
@@ -185,24 +186,18 @@ def make_default_heatmap(G: nx.DiGraph, name: str, description: str) -> ThreatHe
         description=description,
     )
 
-    heatmap.hardware = [
-        ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
-        for v in get_threats_by_category(G, Emb3dCategory.HARDWARE)
-    ]
+    def _make_threat_state(threat: Threat) -> ThreatState:
+        mitigations = get_mitigations(G, threat_id=threat.x_mitre_emb3d_threat_id)
+        mitigations_states = [MitigationState(mitigation_id=mit.x_mitre_emb3d_mitigation_id) for mit in mitigations]
+        return ThreatState(
+            threat_id=threat.x_mitre_emb3d_threat_id,
+            resolution=ThreatResolution.NOT_INVESTIGATED,
+            mitigations=mitigations_states,
+        )
 
-    heatmap.system_software = [
-        ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
-        for v in get_threats_by_category(G, Emb3dCategory.SYSTEM_SW)
-    ]
-
-    heatmap.application_software = [
-        ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
-        for v in get_threats_by_category(G, Emb3dCategory.APP_SW)
-    ]
-
-    heatmap.networking = [
-        ThreatState(threat_id=v.x_mitre_emb3d_threat_id, resolution=ThreatResolution.NOT_INVESTIGATED)
-        for v in get_threats_by_category(G, Emb3dCategory.NETWORKING)
-    ]
+    heatmap.hardware = [_make_threat_state(v) for v in get_threats_by_category(G, Emb3dCategory.HARDWARE)]
+    heatmap.system_software = [_make_threat_state(v) for v in get_threats_by_category(G, Emb3dCategory.SYSTEM_SW)]
+    heatmap.application_software = [_make_threat_state(v) for v in get_threats_by_category(G, Emb3dCategory.APP_SW)]
+    heatmap.networking = [_make_threat_state(v) for v in get_threats_by_category(G, Emb3dCategory.NETWORKING)]
 
     return heatmap
