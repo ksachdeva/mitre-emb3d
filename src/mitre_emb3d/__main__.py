@@ -86,6 +86,8 @@ def main(
 def list_categories(ctx: typer.Context) -> None:
     "List the categories"
 
+    state = cast(CmdState, ctx.obj)
+
     the_categories: List[str] = [
         Emb3dCategory.HARDWARE,
         Emb3dCategory.SYSTEM_SW,
@@ -95,7 +97,13 @@ def list_categories(ctx: typer.Context) -> None:
 
     adapter = TypeAdapter(List[str])
 
-    sys.stdout.write(adapter.dump_json(the_categories, indent=0).decode("utf-8"))
+    if state.pprint:
+        console = Console()
+        category_list = "\n".join(f"- {c}" for c in the_categories)
+        md_categories = Markdown(f"\n ## Categories\n\n{category_list}")
+        console.print(md_categories)
+    else:
+        sys.stdout.write(adapter.dump_json(the_categories, indent=0).decode("utf-8"))
 
 
 def _collect_properties_json(G: Any, props: list, current_level: int, max_level: int) -> list[dict[str, Any]]:
