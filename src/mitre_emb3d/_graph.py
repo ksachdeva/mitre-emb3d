@@ -145,6 +145,22 @@ def get_threats_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Thre
     return vulns
 
 
+def get_threat_from_id(G: nx.DiGraph, threat_id: str) -> Threat:
+    for _, d in G.nodes(data=True):
+        if d.get("type") == str(ObjectType.VULNERABILITY) and d.get("x_mitre_emb3d_threat_id") == threat_id:
+            return Threat(**d)
+
+    raise ValueError(f"Threat with id '{threat_id}' not found in graph.")
+
+
+def get_mitigation_from_id(G: nx.DiGraph, mitigation_id: str) -> Mitigation:
+    for _, d in G.nodes(data=True):
+        if d.get("type") == str(ObjectType.COURSE_OF_ACTION) and d.get("x_mitre_emb3d_mitigation_id") == mitigation_id:
+            return Mitigation(**d)
+
+    raise ValueError(f"Mitigation with id '{mitigation_id}' not found in graph.")
+
+
 def get_properties_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Emb3dProperty]:
     """Return top-level property node IDs that point to the given category."""
     if category not in G:

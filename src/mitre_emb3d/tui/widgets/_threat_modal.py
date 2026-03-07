@@ -1,9 +1,20 @@
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Label, Select, Static, TextArea
+from textual.widgets import (
+    Button,
+    Checkbox,
+    Label,
+    Markdown,
+    Select,
+    Static,
+    TabbedContent,
+    TabPane,
+    TextArea,
+)
 
-from mitre_emb3d._models import ThreatState
+from mitre_emb3d._graph import get_mitigation_from_id, get_threat_from_id
+from mitre_emb3d._models import Threat, ThreatState
 
 from ._resolution import RESOLUTION_LABEL
 
@@ -23,30 +34,51 @@ class ThreatModal(ModalScreen[None]):
     def compose(self) -> ComposeResult:
         resolution_options = [(label, resolution) for resolution, label in RESOLUTION_LABEL.items()]
 
+        threat: Threat = get_threat_from_id(self.app.graph, self._threat_state.threat_id)  # type: ignore
+
         with Vertical(id="threat-modal-dialog"):
             yield Static(f"Threat: {self._threat_state.threat_id}", id="threat-modal-title")
 
-            yield Label("Resolution")
-            yield Select(
-                resolution_options,
-                value=self._threat_state.resolution,
-                id="resolution-select",
-            )
+            with TabbedContent():
+                with TabPane("Assessment", id="tab-assessment"):
+                    yield Label("Resolution")
+                    yield Select(
+                        resolution_options,
+                        value=self._threat_state.resolution,
+                        id="resolution-select",
+                    )
 
-            yield Label("Mitigations")
-            with VerticalScroll(id="mitigation-list"):
-                if self._threat_state.mitigations:
-                    for mid in self._threat_state.mitigations:
-                        yield Checkbox(mid.mitigation_id, id=f"mitigation-{mid.mitigation_id}")
-                else:
-                    yield Static("No mitigations available.")
+                    yield Label("Mitigations")
+                    with VerticalScroll(id="mitigation-list"):
+                        if self._threat_state.mitigations:
+                            for mid in self._threat_state.mitigations:
+                                yield Checkbox(mid.mitigation_id, id=f"mitigation-{mid.mitigation_id}")
+                        else:
+                            yield Static("No mitigations available.")
 
-            yield Label("Remarks")
-            yield TextArea(id="remarks-area")
+                    yield Label("Remarks")
+                    yield TextArea(id="remarks-area")
 
-            with Horizontal(id="threat-modal-buttons"):
-                yield Button("Save", variant="primary", id="modal-save")
-                yield Button("Cancel", variant="default", id="modal-cancel")
+                    with Horizontal(id="threat-modal-buttons"):
+                        yield Button("Save", variant="primary", id="modal-save")
+                        yield Button("Cancel", variant="default", id="modal-cancel")
+
+                with TabPane("Threat Description", id="tab-threat-description"):
+                    with VerticalScroll():
+                        yield Markdown(markdown=threat.display(), id="threat-description-md")
+
+                with TabPane("Mitigations", id="tab-mitigations"):
+                    if self._threat_state.mitigations:
+                        with TabbedContent():
+                            for mid in self._threat_state.mitigations:
+                                with TabPane(mid.mitigation_id, id=f"tab-mitigation-{mid.mitigation_id}"):
+                                    with VerticalScroll():
+                                        mitigation = get_mitigation_from_id(self.app.graph, mid.mitigation_id)  # type: ignore
+                                        yield Markdown(
+                                            markdown=mitigation.display(), id=f"mitigation-md-{mid.mitigation_id}"
+                                        )
+                    else:
+                        yield Static("No mitigations available.")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.dismiss(None)

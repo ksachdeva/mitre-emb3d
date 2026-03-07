@@ -23,6 +23,10 @@ class MEDApp(App[None]):
         self._heatmap_file = heatmap_file
         self._heatmap = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
 
+    @property
+    def graph(self) -> nx.DiGraph:
+        return self._graph
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield ThreatLegend()

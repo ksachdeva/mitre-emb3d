@@ -77,6 +77,28 @@ class Threat(BaseModel):
             "x_mitre_emb3d_threat_category": self.x_mitre_emb3d_threat_category,
         }
 
+    def display(self) -> str:
+        return f""" # {self.name}
+
+{self.description}
+
+**Category:**
+{self.x_mitre_emb3d_threat_category}
+
+**CVEs:**
+{self.x_mitre_emb3d_threat_CVEs}
+
+**CWEs:**
+{self.x_mitre_emb3d_threat_CWEs}
+
+**Evidence:**
+{self.x_mitre_emb3d_threat_evidence}
+
+**Maturity:**
+{self.x_mitre_emb3d_threat_maturity}
+
+"""
+
 
 class Emb3dProperty(BaseModel):
     id: str
@@ -136,6 +158,23 @@ class Mitigation(BaseModel):
             "x_mitre_emb3d_mitigation_maturity": self.x_mitre_emb3d_mitigation_maturity,
             "x_mitre_emb3d_mitigation_references": self.x_mitre_emb3d_mitigation_references,
         }
+
+    def display(self) -> str:
+        return f"""# {self.name}
+
+{self.description}
+
+**IEC 62443 Mappings:**
+{self.x_mitre_emb3d_mitigation_IEC_62443_mappings}
+
+**Maturity:**
+{self.x_mitre_emb3d_mitigation_maturity}
+
+**References:**
+
+{self.x_mitre_emb3d_mitigation_references}
+
+"""
 
 
 StixObject = Annotated[
