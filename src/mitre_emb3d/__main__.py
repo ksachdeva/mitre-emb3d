@@ -110,7 +110,7 @@ def list_categories(ctx: typer.Context) -> None:
 def _collect_properties_json(G: Any, props: list, current_level: int, max_level: int) -> list[dict[str, Any]]:
     result = []
     for prop in props:
-        item: dict[str, Any] = {"id": prop.x_mitre_emb3d_property_id, "name": prop.name}
+        item: dict[str, Any] = {"id": prop.property_id, "name": prop.name}
         if current_level < max_level:
             subs = get_subproperties(G, prop)
             if subs:
@@ -121,7 +121,7 @@ def _collect_properties_json(G: Any, props: list, current_level: int, max_level:
 
 def _print_properties_pprint(G: Any, props: list, current_level: int, max_level: int, indent: int = 0) -> None:
     for prop in props:
-        rprint(f"{'  ' * indent}- {prop.x_mitre_emb3d_property_id}: {prop.name}")
+        rprint(f"{'  ' * indent}- {prop.property_id}: {prop.name}")
         if current_level < max_level:
             subs = get_subproperties(G, prop)
             if subs:
@@ -162,9 +162,9 @@ def list_threats(ctx: typer.Context, category: Emb3dCategory) -> None:
 
     if state.pprint:
         for v in threats:
-            rprint(f"- {v.x_mitre_emb3d_threat_id}: {v.name}")
+            rprint(f"- {v.threat_id}: {v.name}")
     else:
-        result = [{"id": v.x_mitre_emb3d_threat_id, "name": v.name} for v in threats]
+        result = [{"id": v.threat_id, "name": v.name} for v in threats]
         sys.stdout.write(json.dumps(result, indent=None))
 
 
@@ -179,9 +179,9 @@ def list_mitigations(ctx: typer.Context, threat_id: str) -> None:
 
     if state.pprint:
         for m in mitigations:
-            rprint(f"- {m.x_mitre_emb3d_mitigation_id}: {m.name}")
+            rprint(f"- {m.mitigation_id}: {m.name}")
     else:
-        result = [{"id": m.x_mitre_emb3d_mitigation_id, "name": m.name} for m in mitigations]
+        result = [{"id": m.mitigation_id, "name": m.name} for m in mitigations]
         sys.stdout.write(json.dumps(result, indent=None))
 
 
@@ -212,7 +212,7 @@ def threat(ctx: typer.Context, threat_id: str) -> None:
         console.print(md)
         if mitigations:
             # make markdown for mitigations
-            mitigation_list = "\n".join(f"- {m.x_mitre_emb3d_mitigation_id} - {m.name}\n\n" for m in mitigations)
+            mitigation_list = "\n".join(f"- {m.mitigation_id} - {m.name}\n\n" for m in mitigations)
             md_mitigations = Markdown(f"---\n ## Mitigations\n\n{mitigation_list}")
             console.print(md_mitigations)
     else:
@@ -221,7 +221,7 @@ def threat(ctx: typer.Context, threat_id: str) -> None:
             exclude_none=True,
             exclude={"id"},
         )
-        threat_dict["mitigations"] = [{"id": m.x_mitre_emb3d_mitigation_id, "name": m.name} for m in mitigations]
+        threat_dict["mitigations"] = [{"id": m.mitigation_id, "name": m.name} for m in mitigations]
         dump = json.dumps(threat_dict, indent=2)
         sys.stdout.write(dump)
 

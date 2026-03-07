@@ -109,12 +109,12 @@ def get_mitigations(
     mitigations = [
         Mitigation(**G.nodes[source])
         for source, target, data in G.edges(data=True)
-        if data.get("relationship_type") == "mitigates" and G.nodes[target].get("x_mitre_emb3d_threat_id") == threat_id
+        if data.get("relationship_type") == "mitigates" and G.nodes[target].get("threat_id") == threat_id
     ]
 
     mits = sorted(
         mitigations,
-        key=lambda v: int(v.x_mitre_emb3d_mitigation_id.split("-")[1]),
+        key=lambda v: int(v.mitigation_id.split("-")[1]),
     )
 
     return mits
@@ -139,7 +139,7 @@ def get_threats_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Thre
 
     vulns = sorted(
         result,
-        key=lambda v: int(v.x_mitre_emb3d_threat_id.split("-")[1]),
+        key=lambda v: int(v.threat_id.split("-")[1]),
     )
 
     return vulns
@@ -147,7 +147,7 @@ def get_threats_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Thre
 
 def get_threat_from_id(G: nx.DiGraph, threat_id: str) -> Threat:
     for _, d in G.nodes(data=True):
-        if d.get("type") == str(ObjectType.VULNERABILITY) and d.get("x_mitre_emb3d_threat_id") == threat_id:
+        if d.get("type") == str(ObjectType.VULNERABILITY) and d.get("threat_id") == threat_id:
             return Threat(**d)
 
     raise ValueError(f"Threat with id '{threat_id}' not found in graph.")
@@ -155,7 +155,7 @@ def get_threat_from_id(G: nx.DiGraph, threat_id: str) -> Threat:
 
 def get_mitigation_from_id(G: nx.DiGraph, mitigation_id: str) -> Mitigation:
     for _, d in G.nodes(data=True):
-        if d.get("type") == str(ObjectType.COURSE_OF_ACTION) and d.get("x_mitre_emb3d_mitigation_id") == mitigation_id:
+        if d.get("type") == str(ObjectType.COURSE_OF_ACTION) and d.get("mitigation_id") == mitigation_id:
             return Mitigation(**d)
 
     raise ValueError(f"Mitigation with id '{mitigation_id}' not found in graph.")
@@ -163,10 +163,9 @@ def get_mitigation_from_id(G: nx.DiGraph, mitigation_id: str) -> Mitigation:
 
 def get_threat_ids_for_mitigation(G: nx.DiGraph, mitigation_id: str) -> list[str]:
     return [
-        G.nodes[target]["x_mitre_emb3d_threat_id"]
+        G.nodes[target]["threat_id"]
         for source, target, data in G.edges(data=True)
-        if data.get("relationship_type") == "mitigates"
-        and G.nodes[source].get("x_mitre_emb3d_mitigation_id") == mitigation_id
+        if data.get("relationship_type") == "mitigates" and G.nodes[source].get("mitigation_id") == mitigation_id
     ]
 
 
@@ -212,10 +211,10 @@ def make_default_heatmap(G: nx.DiGraph, name: str, description: str) -> ThreatHe
     )
 
     def _make_threat_state(threat: Threat) -> ThreatState:
-        mitigations = get_mitigations(G, threat_id=threat.x_mitre_emb3d_threat_id)
-        mitigations_states = [MitigationState(mitigation_id=mit.x_mitre_emb3d_mitigation_id) for mit in mitigations]
+        mitigations = get_mitigations(G, threat_id=threat.threat_id)
+        mitigations_states = [MitigationState(mitigation_id=mit.mitigation_id) for mit in mitigations]
         return ThreatState(
-            threat_id=threat.x_mitre_emb3d_threat_id,
+            threat_id=threat.threat_id,
             resolution=ThreatResolution.NOT_INVESTIGATED,
             mitigations=mitigations_states,
         )

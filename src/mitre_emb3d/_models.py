@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Annotated, Any, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Emb3dCategory(StrEnum):
@@ -49,16 +49,18 @@ class Relationship(BaseModel):
 
 
 class Threat(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str
     type: Literal[ObjectType.VULNERABILITY]
     name: str
     description: str
-    x_mitre_emb3d_threat_CVEs: str
-    x_mitre_emb3d_threat_CWEs: str
-    x_mitre_emb3d_threat_evidence: str
-    x_mitre_emb3d_threat_id: str
-    x_mitre_emb3d_threat_maturity: str
-    x_mitre_emb3d_threat_category: str
+    cves: str = Field(validation_alias="x_mitre_emb3d_threat_CVEs")
+    cwes: str = Field(validation_alias="x_mitre_emb3d_threat_CWEs")
+    evidence: str = Field(validation_alias="x_mitre_emb3d_threat_evidence")
+    threat_id: str = Field(validation_alias="x_mitre_emb3d_threat_id")
+    maturity: str = Field(validation_alias="x_mitre_emb3d_threat_maturity")
+    category: str = Field(validation_alias="x_mitre_emb3d_threat_category")
 
     def graph_id(self) -> str:
         return self.id
@@ -69,12 +71,12 @@ class Threat(BaseModel):
             "type": str(ObjectType.VULNERABILITY),
             "name": self.name,
             "description": self.description,
-            "x_mitre_emb3d_threat_CVEs": self.x_mitre_emb3d_threat_CVEs,
-            "x_mitre_emb3d_threat_CWEs": self.x_mitre_emb3d_threat_CWEs,
-            "x_mitre_emb3d_threat_evidence": self.x_mitre_emb3d_threat_evidence,
-            "x_mitre_emb3d_threat_id": self.x_mitre_emb3d_threat_id,
-            "x_mitre_emb3d_threat_maturity": self.x_mitre_emb3d_threat_maturity,
-            "x_mitre_emb3d_threat_category": self.x_mitre_emb3d_threat_category,
+            "cves": self.cves,
+            "cwes": self.cwes,
+            "evidence": self.evidence,
+            "threat_id": self.threat_id,
+            "maturity": self.maturity,
+            "category": self.category,
         }
 
     def display(self) -> str:
@@ -83,34 +85,36 @@ class Threat(BaseModel):
 {self.description}
 
 **Category:**
-{self.x_mitre_emb3d_threat_category}
+{self.category}
 
 **CVEs:**
-{self.x_mitre_emb3d_threat_CVEs}
+{self.cves}
 
 **CWEs:**
-{self.x_mitre_emb3d_threat_CWEs}
+{self.cwes}
 
 **Evidence:**
-{self.x_mitre_emb3d_threat_evidence}
+{self.evidence}
 
 **Maturity:**
-{self.x_mitre_emb3d_threat_maturity}
+{self.maturity}
 
 """
 
 
 class Emb3dProperty(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str
     type: Literal[ObjectType.EMB3D_PROPERTY]
     name: str
     category: str
     is_subproperty: Optional[bool] = None
-    x_mitre_emb3d_property_id: Optional[str] = None
+    property_id: Optional[str] = Field(None, validation_alias="x_mitre_emb3d_property_id")
 
     @model_validator(mode="after")
     def validate_property_id(self) -> Emb3dProperty:
-        if self.is_subproperty is not None and self.x_mitre_emb3d_property_id is None:
+        if self.is_subproperty is not None and self.property_id is None:
             raise ValueError("x_mitre_emb3d_property_id is required when is_subproperty is set")
         return self
 
@@ -128,21 +132,23 @@ class Emb3dProperty(BaseModel):
         if self.is_subproperty is not None:
             result["is_subproperty"] = str(self.is_subproperty)
 
-        if self.x_mitre_emb3d_property_id is not None:
-            result["x_mitre_emb3d_property_id"] = self.x_mitre_emb3d_property_id
+        if self.property_id is not None:
+            result["property_id"] = self.property_id
 
         return result
 
 
 class Mitigation(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str
     type: Literal[ObjectType.COURSE_OF_ACTION]
     name: str
     description: str
-    x_mitre_emb3d_mitigation_IEC_62443_mappings: str
-    x_mitre_emb3d_mitigation_id: str
-    x_mitre_emb3d_mitigation_maturity: str
-    x_mitre_emb3d_mitigation_references: str
+    iec_62443_mappings: str = Field(validation_alias="x_mitre_emb3d_mitigation_IEC_62443_mappings")
+    mitigation_id: str = Field(validation_alias="x_mitre_emb3d_mitigation_id")
+    maturity: str = Field(validation_alias="x_mitre_emb3d_mitigation_maturity")
+    references: str = Field(validation_alias="x_mitre_emb3d_mitigation_references")
 
     def graph_id(self) -> str:
         return self.id
@@ -153,10 +159,10 @@ class Mitigation(BaseModel):
             "name": self.name,
             "type": str(ObjectType.COURSE_OF_ACTION),
             "description": self.description,
-            "x_mitre_emb3d_mitigation_IEC_62443_mappings": self.x_mitre_emb3d_mitigation_IEC_62443_mappings,
-            "x_mitre_emb3d_mitigation_id": self.x_mitre_emb3d_mitigation_id,
-            "x_mitre_emb3d_mitigation_maturity": self.x_mitre_emb3d_mitigation_maturity,
-            "x_mitre_emb3d_mitigation_references": self.x_mitre_emb3d_mitigation_references,
+            "iec_62443_mappings": self.iec_62443_mappings,
+            "mitigation_id": self.mitigation_id,
+            "maturity": self.maturity,
+            "references": self.references,
         }
 
     def display(self) -> str:
@@ -165,14 +171,14 @@ class Mitigation(BaseModel):
 {self.description}
 
 **IEC 62443 Mappings:**
-{self.x_mitre_emb3d_mitigation_IEC_62443_mappings}
+{self.iec_62443_mappings}
 
 **Maturity:**
-{self.x_mitre_emb3d_mitigation_maturity}
+{self.maturity}
 
 **References:**
 
-{self.x_mitre_emb3d_mitigation_references}
+{self.references}
 
 """
 
