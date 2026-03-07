@@ -80,3 +80,53 @@ ThreatEntry.na                       { background: #4488cc; }
 ThreatEntry.mitigated                { background: #44aa44; }
 ThreatEntry.vulnerable               { background: #cc4444; }
 ThreatEntry.conditionally-mitigated  { background: #cc8844; }
+
+/* ── Threat Modal ────────────────────────────────────── */
+
+ThreatModal {
+    align: center middle;
+}
+
+#threat-modal-dialog {
+    width: 60;
+    max-height: 80%;
+    padding: 1 2;
+    border: thick $primary;
+    background: $surface;
+}
+
+#threat-modal-title {
+    text-style: bold;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#resolution-select {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#mitigation-list {
+    height: auto;
+    max-height: 12;
+    margin-bottom: 1;
+    border: solid $primary;
+    padding: 0 1;
+}
+
+#remarks-area {
+    height: 6;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#threat-modal-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+#threat-modal-buttons Button {
+    margin: 0 1;
+}
