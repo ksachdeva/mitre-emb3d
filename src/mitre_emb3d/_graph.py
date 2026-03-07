@@ -161,6 +161,15 @@ def get_mitigation_from_id(G: nx.DiGraph, mitigation_id: str) -> Mitigation:
     raise ValueError(f"Mitigation with id '{mitigation_id}' not found in graph.")
 
 
+def get_threat_ids_for_mitigation(G: nx.DiGraph, mitigation_id: str) -> list[str]:
+    return [
+        G.nodes[target]["x_mitre_emb3d_threat_id"]
+        for source, target, data in G.edges(data=True)
+        if data.get("relationship_type") == "mitigates"
+        and G.nodes[source].get("x_mitre_emb3d_mitigation_id") == mitigation_id
+    ]
+
+
 def get_properties_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Emb3dProperty]:
     """Return top-level property node IDs that point to the given category."""
     if category not in G:

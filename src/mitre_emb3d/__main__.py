@@ -20,6 +20,7 @@ from mitre_emb3d._graph import (
     get_properties_by_category,
     get_subproperties,
     get_threat_from_id,
+    get_threat_ids_for_mitigation,
     get_threats_by_category,
 )
 from mitre_emb3d._heatmap import heatmap_app
@@ -233,15 +234,23 @@ def mitigation(ctx: typer.Context, mitigation_id: str) -> None:
     G = state.graph
 
     mitigation = get_mitigation_from_id(G, mitigation_id)
+    threat_ids = get_threat_ids_for_mitigation(G, mitigation_id)
 
     if state.pprint:
         console = Console()
         md = Markdown(mitigation.display())
         console.print(md)
+        if threat_ids:
+            # make markdown for threats
+            threat_list = "\n".join(f"- {t} - {get_threat_from_id(G, t).name}" for t in threat_ids)
+            md_threats = Markdown(f"---\n ## Threats\n\n{threat_list}")
+            console.print(md_threats)
     else:
-        dump = mitigation.model_dump_json(
-            indent=2,
+        # merge threat and mitigations into a single dict for JSON output
+        mitigation_dict = mitigation.model_dump(
             exclude_none=True,
             exclude={"id"},
         )
+        mitigation_dict["threats"] = [{"id": t, "name": get_threat_from_id(G, t).name} for t in threat_ids]
+        dump = json.dumps(mitigation_dict, indent=None)
         sys.stdout.write(dump)
