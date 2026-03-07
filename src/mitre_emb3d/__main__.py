@@ -7,15 +7,19 @@ from typing import Annotated, Any, List, cast
 import typer
 from pydantic import TypeAdapter
 from rich import print as rprint
+from rich.console import Console
+from rich.markdown import Markdown
 from typer import Typer
 
 from mitre_emb3d import __version__
 from mitre_emb3d._doc_loaders import download_release
 from mitre_emb3d._graph import (
     build_split_graph,
+    get_mitigation_from_id,
     get_mitigations,
     get_properties_by_category,
     get_subproperties,
+    get_threat_from_id,
     get_threats_by_category,
 )
 from mitre_emb3d._heatmap import heatmap_app
@@ -180,3 +184,56 @@ def tui(ctx: typer.Context, heatmap_file: Path) -> None:
 
     app = MEDApp(state.graph, heatmap_file)
     app.run()
+
+
+@cli_app.command()
+def threat(ctx: typer.Context, threat_id: str) -> None:
+    "Threat Information"
+
+    state = cast(CmdState, ctx.obj)
+    G = state.graph
+
+    threat = get_threat_from_id(G, threat_id)
+
+    mitigations = get_mitigations(G, threat_id)
+
+    if state.pprint:
+        console = Console()
+        md = Markdown(threat.display())
+        console.print(md)
+        if mitigations:
+            # make markdown for mitigations
+            mitigation_list = "\n".join(f"- {m.x_mitre_emb3d_mitigation_id} - {m.name}\n\n" for m in mitigations)
+            md_mitigations = Markdown(f"---\n ## Mitigations\n\n{mitigation_list}")
+            console.print(md_mitigations)
+    else:
+        # merge threat and mitigations into a single dict for JSON output
+        threat_dict = threat.model_dump(
+            exclude_none=True,
+            exclude={"id"},
+        )
+        threat_dict["mitigations"] = [{"id": m.x_mitre_emb3d_mitigation_id, "name": m.name} for m in mitigations]
+        dump = json.dumps(threat_dict, indent=2)
+        sys.stdout.write(dump)
+
+
+@cli_app.command()
+def mitigation(ctx: typer.Context, mitigation_id: str) -> None:
+    "Mitigation Information"
+
+    state = cast(CmdState, ctx.obj)
+    G = state.graph
+
+    mitigation = get_mitigation_from_id(G, mitigation_id)
+
+    if state.pprint:
+        console = Console()
+        md = Markdown(mitigation.display())
+        console.print(md)
+    else:
+        dump = mitigation.model_dump_json(
+            indent=2,
+            exclude_none=True,
+            exclude={"id"},
+        )
+        sys.stdout.write(dump)
