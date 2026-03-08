@@ -1,0 +1,19 @@
+{
+  "name": "mitre",
+  "owner": {
+    "name": "Kapil Sachdeva"
+  },
+  "metadata": {
+    "description": "AI Agent harness for MITRE EMB3D Threat Modeling framework.",
+    "version": "0.3.0"
+  },
+  "plugins": [
+    {
+      "name": "mitre-emb3d",
+      "source": "./",
+      "description": "AI Agent harness for MITRE EMB3D Threat Modeling framework.",
+      "category": "security",
+      "tags": ["mitre-emb3d", "security", "threat modeling", "mcp"]
+    }
+  ]
+}
