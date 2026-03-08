@@ -7,12 +7,15 @@ import networkx as nx
 from ._models import (
     Emb3dCategory,
     Emb3dProperty,
+    Emb3dPropertyInfo,
     Mitigation,
+    MitigationInfo,
     MitigationState,
     ObjectType,
     StixBundle,
     Threat,
     ThreatHeatMap,
+    ThreatInfo,
     ThreatResolution,
     ThreatState,
 )
@@ -105,22 +108,22 @@ def build_split_graph(bundle_doc: StixBundle) -> nx.DiGraph:
 def get_mitigations(
     G: nx.DiGraph,
     threat_id: str,
-) -> list[Mitigation]:
+) -> list[MitigationInfo]:
     mitigations = [
-        Mitigation(**G.nodes[source])
+        MitigationInfo(id=G.nodes[source]["mitigation_id"], name=G.nodes[source]["name"])
         for source, target, data in G.edges(data=True)
         if data.get("relationship_type") == "mitigates" and G.nodes[target].get("threat_id") == threat_id
     ]
 
     mits = sorted(
         mitigations,
-        key=lambda v: int(v.mitigation_id.split("-")[1]),
+        key=lambda v: int(v.id.split("-")[1]),
     )
 
     return mits
 
 
-def get_threats_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Threat]:
+def get_threats_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[ThreatInfo]:
     if category not in G:
         raise ValueError(
             f"Category '{category}' not found in graph. "
@@ -130,16 +133,17 @@ def get_threats_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Thre
     property_nodes = {n for n in nx.ancestors(G, category) if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)}
 
     seen: set[str] = set()
-    result: list[Threat] = []
+    result: list[ThreatInfo] = []
     for prop in property_nodes:
         for successor in G.successors(prop):
             if successor not in seen and G.nodes[successor].get("type") == str(ObjectType.VULNERABILITY):
                 seen.add(successor)
-                result.append(Threat(**G.nodes[successor]))
+                node_attrs = G.nodes[successor]
+                result.append(ThreatInfo(id=node_attrs["threat_id"], name=node_attrs["name"]))
 
     vulns = sorted(
         result,
-        key=lambda v: int(v.threat_id.split("-")[1]),
+        key=lambda v: int(v.id.split("-")[1]),
     )
 
     return vulns
@@ -161,15 +165,15 @@ def get_mitigation_from_id(G: nx.DiGraph, mitigation_id: str) -> Mitigation:
     raise ValueError(f"Mitigation with id '{mitigation_id}' not found in graph.")
 
 
-def get_threat_ids_for_mitigation(G: nx.DiGraph, mitigation_id: str) -> list[str]:
+def get_threat_info_for_mitigation(G: nx.DiGraph, mitigation_id: str) -> list[ThreatInfo]:
     return [
-        G.nodes[target]["threat_id"]
+        ThreatInfo(id=G.nodes[target]["threat_id"], name=G.nodes[target]["name"])
         for source, target, data in G.edges(data=True)
         if data.get("relationship_type") == "mitigates" and G.nodes[source].get("mitigation_id") == mitigation_id
     ]
 
 
-def get_properties_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Emb3dProperty]:
+def get_properties_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Emb3dPropertyInfo]:
     """Return top-level property node IDs that point to the given category."""
     if category not in G:
         raise ValueError(
@@ -177,26 +181,42 @@ def get_properties_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[E
             f"Valid categories: {[n for n, d in G.nodes(data=True) if d.get('type') == 'category']}"
         )
     return [
-        Emb3dProperty(**G.nodes[n])
+        Emb3dPropertyInfo(id=G.nodes[n]["property_id"], name=G.nodes[n]["name"])
         for n in G.predecessors(category)
         if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
     ]
 
 
-def get_subproperties(G: nx.DiGraph, property_node: Emb3dProperty) -> list[Emb3dProperty]:
+def get_subproperties(G: nx.DiGraph, property_node: Emb3dPropertyInfo) -> list[Emb3dPropertyInfo]:
     """Return sub-property node IDs that point to the given property node."""
-    # Graph nodes use remapped keys (e.g. "emb3d-property-1"), not the original STIX IDs
     graph_node_key = next(
-        (n for n, d in G.nodes(data=True) if d.get("id") == property_node.id),
+        (n for n, d in G.nodes(data=True) if d.get("property_id") == property_node.id),
         None,
     )
     if graph_node_key is None:
         return []
     return [
-        Emb3dProperty(**G.nodes[n])
+        Emb3dPropertyInfo(id=G.nodes[n]["property_id"], name=G.nodes[n]["name"])
         for n in G.predecessors(graph_node_key)
         if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
     ]
+
+
+def collect_sub_properties(
+    G: nx.DiGraph,
+    props: list[Emb3dPropertyInfo],
+    current_level: int,
+    max_level: int,
+) -> list[Emb3dPropertyInfo]:
+    result: list[Emb3dPropertyInfo] = []
+    for prop in props:
+        # item: dict[str, Any] = {"id": prop.id, "name": prop.name}
+        if current_level < max_level:
+            subs = get_subproperties(G, prop)
+            if subs:
+                prop.sub_properties = collect_sub_properties(G, subs, current_level + 1, max_level)
+        result.append(prop)
+    return result
 
 
 def write_graphml(G: nx.DiGraph, output_path: Path) -> None:
@@ -210,11 +230,11 @@ def make_default_heatmap(G: nx.DiGraph, name: str, description: str) -> ThreatHe
         description=description,
     )
 
-    def _make_threat_state(threat: Threat) -> ThreatState:
-        mitigations = get_mitigations(G, threat_id=threat.threat_id)
-        mitigations_states = [MitigationState(mitigation_id=mit.mitigation_id) for mit in mitigations]
+    def _make_threat_state(threat: ThreatInfo) -> ThreatState:
+        mitigations = get_mitigations(G, threat_id=threat.id)
+        mitigations_states = [MitigationState(mitigation_id=mit.id) for mit in mitigations]
         return ThreatState(
-            threat_id=threat.threat_id,
+            threat_id=threat.id,
             resolution=ThreatResolution.NOT_INVESTIGATED,
             mitigations=mitigations_states,
         )

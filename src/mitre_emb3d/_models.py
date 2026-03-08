@@ -91,6 +91,30 @@ class Threat(BaseModel):
 """
 
 
+class ThreatInfo(BaseModel):
+    id: str
+    name: str
+
+
+class ThreatWithMitigations(Threat):
+    mitigations: List[MitigationInfo] = Field(default_factory=list)
+
+    def display(self) -> str:
+        base_display = super().display()
+        if not self.mitigations:
+            return base_display
+
+        mitigations_display = "\n".join(f"- {m.id} - {m.name}\n\n" for m in self.mitigations)
+        return f"{base_display}\n---\n ## Mitigations\n\n{mitigations_display}"
+
+
+class Emb3dPropertyInfo(BaseModel):
+    id: str
+    name: str
+
+    sub_properties: List[Emb3dPropertyInfo] = Field(default_factory=list)
+
+
 class Emb3dProperty(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -112,6 +136,11 @@ class Emb3dProperty(BaseModel):
 
     def graph_props(self) -> dict[str, Any]:
         return self.model_dump()
+
+
+class MitigationInfo(BaseModel):
+    id: str
+    name: str
 
 
 class Mitigation(BaseModel):
@@ -148,6 +177,18 @@ class Mitigation(BaseModel):
 {self.references}
 
 """
+
+
+class MitigationWithThreats(Mitigation):
+    threats: List[ThreatInfo] = Field(default_factory=list)
+
+    def display(self) -> str:
+        base_display = super().display()
+        if not self.threats:
+            return base_display
+
+        threats_display = "\n".join(f"- {t.id} - {t.name}\n\n" for t in self.threats)
+        return f"{base_display}\n---\n ## Mitigates Threats\n\n{threats_display}"
 
 
 StixObject = Annotated[

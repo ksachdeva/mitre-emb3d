@@ -15,19 +15,21 @@ from mitre_emb3d import __version__
 from mitre_emb3d._doc_loaders import download_release
 from mitre_emb3d._graph import (
     build_split_graph,
+    collect_sub_properties,
     get_mitigation_from_id,
     get_mitigations,
     get_properties_by_category,
     get_subproperties,
     get_threat_from_id,
-    get_threat_ids_for_mitigation,
+    get_threat_info_for_mitigation,
     get_threats_by_category,
 )
 from mitre_emb3d._heatmap import heatmap_app
 from mitre_emb3d._locations import cache_directory
-from mitre_emb3d._models import Emb3dCategory
+from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, MitigationWithThreats, ThreatWithMitigations
 from mitre_emb3d._models import StixBundle as ST
 from mitre_emb3d._types import CmdState
+from mitre_emb3d.mcp import build_mcp_server
 from mitre_emb3d.tui._app import MEDApp
 
 _LOGGER = logging.getLogger(__name__)
@@ -107,21 +109,15 @@ def list_categories(ctx: typer.Context) -> None:
         sys.stdout.write(adapter.dump_json(the_categories, indent=0).decode("utf-8"))
 
 
-def _collect_properties_json(G: Any, props: list, current_level: int, max_level: int) -> list[dict[str, Any]]:
-    result = []
+def _print_properties_pprint(
+    G: Any,
+    props: list[Emb3dPropertyInfo],
+    current_level: int,
+    max_level: int,
+    indent: int = 0,
+) -> None:
     for prop in props:
-        item: dict[str, Any] = {"id": prop.property_id, "name": prop.name}
-        if current_level < max_level:
-            subs = get_subproperties(G, prop)
-            if subs:
-                item["subproperties"] = _collect_properties_json(G, subs, current_level + 1, max_level)
-        result.append(item)
-    return result
-
-
-def _print_properties_pprint(G: Any, props: list, current_level: int, max_level: int, indent: int = 0) -> None:
-    for prop in props:
-        rprint(f"{'  ' * indent}- {prop.property_id}: {prop.name}")
+        rprint(f"{'  ' * indent}- {prop.id}: {prop.name}")
         if current_level < max_level:
             subs = get_subproperties(G, prop)
             if subs:
@@ -147,7 +143,7 @@ def list_properties(
     if state.pprint:
         _print_properties_pprint(G, device_properties, 1, level)
     else:
-        result = _collect_properties_json(G, device_properties, 1, level)
+        result = collect_sub_properties(G, device_properties, 1, level)
         sys.stdout.write(json.dumps(result, indent=None))
 
 
@@ -162,9 +158,9 @@ def list_threats(ctx: typer.Context, category: Emb3dCategory) -> None:
 
     if state.pprint:
         for v in threats:
-            rprint(f"- {v.threat_id}: {v.name}")
+            rprint(f"- {v.id}: {v.name}")
     else:
-        result = [{"id": v.threat_id, "name": v.name} for v in threats]
+        result = [{"id": v.id, "name": v.name} for v in threats]
         sys.stdout.write(json.dumps(result, indent=None))
 
 
@@ -179,10 +175,55 @@ def list_mitigations(ctx: typer.Context, threat_id: str) -> None:
 
     if state.pprint:
         for m in mitigations:
-            rprint(f"- {m.mitigation_id}: {m.name}")
+            rprint(f"- {m.id}: {m.name}")
     else:
-        result = [{"id": m.mitigation_id, "name": m.name} for m in mitigations]
+        result = [{"id": m.id, "name": m.name} for m in mitigations]
         sys.stdout.write(json.dumps(result, indent=None))
+
+
+@cli_app.command()
+def threat(ctx: typer.Context, threat_id: str) -> None:
+    "Threat Information"
+
+    state = cast(CmdState, ctx.obj)
+    G = state.graph
+
+    threat = get_threat_from_id(G, threat_id)
+    mitigations = get_mitigations(G, threat_id)
+
+    threat_with_mitigations = ThreatWithMitigations(**threat.model_dump(), mitigations=mitigations)
+
+    if state.pprint:
+        console = Console()
+        md = Markdown(threat_with_mitigations.display())
+        console.print(md)
+    else:
+        dump = threat_with_mitigations.model_dump_json(exclude_none=True, exclude={"id"})
+        sys.stdout.write(dump)
+
+
+@cli_app.command()
+def mitigation(ctx: typer.Context, mitigation_id: str) -> None:
+    "Mitigation Information"
+
+    state = cast(CmdState, ctx.obj)
+    G = state.graph
+
+    mitigation = get_mitigation_from_id(G, mitigation_id)
+    threat_infos = get_threat_info_for_mitigation(G, mitigation_id)
+
+    mitigation_with_threats = MitigationWithThreats(
+        **mitigation.model_dump(),
+        threats=threat_infos,
+    )
+
+    if state.pprint:
+        console = Console()
+        md = Markdown(mitigation_with_threats.display())
+        console.print(md)
+    else:
+        dump = mitigation_with_threats.model_dump_json(exclude_none=True, exclude={"id"}, indent=2)
+        sys.stdout.write(dump)
 
 
 @cli_app.command()
@@ -196,61 +237,11 @@ def tui(ctx: typer.Context, heatmap_file: Path) -> None:
 
 
 @cli_app.command()
-def threat(ctx: typer.Context, threat_id: str) -> None:
-    "Threat Information"
+def mcp(ctx: typer.Context) -> None:
+    "Launch the MCP server"
 
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
-    threat = get_threat_from_id(G, threat_id)
-
-    mitigations = get_mitigations(G, threat_id)
-
-    if state.pprint:
-        console = Console()
-        md = Markdown(threat.display())
-        console.print(md)
-        if mitigations:
-            # make markdown for mitigations
-            mitigation_list = "\n".join(f"- {m.mitigation_id} - {m.name}\n\n" for m in mitigations)
-            md_mitigations = Markdown(f"---\n ## Mitigations\n\n{mitigation_list}")
-            console.print(md_mitigations)
-    else:
-        # merge threat and mitigations into a single dict for JSON output
-        threat_dict = threat.model_dump(
-            exclude_none=True,
-            exclude={"id"},
-        )
-        threat_dict["mitigations"] = [{"id": m.mitigation_id, "name": m.name} for m in mitigations]
-        dump = json.dumps(threat_dict, indent=2)
-        sys.stdout.write(dump)
-
-
-@cli_app.command()
-def mitigation(ctx: typer.Context, mitigation_id: str) -> None:
-    "Mitigation Information"
-
-    state = cast(CmdState, ctx.obj)
-    G = state.graph
-
-    mitigation = get_mitigation_from_id(G, mitigation_id)
-    threat_ids = get_threat_ids_for_mitigation(G, mitigation_id)
-
-    if state.pprint:
-        console = Console()
-        md = Markdown(mitigation.display())
-        console.print(md)
-        if threat_ids:
-            # make markdown for threats
-            threat_list = "\n".join(f"- {t} - {get_threat_from_id(G, t).name}" for t in threat_ids)
-            md_threats = Markdown(f"---\n ## Threats\n\n{threat_list}")
-            console.print(md_threats)
-    else:
-        # merge threat and mitigations into a single dict for JSON output
-        mitigation_dict = mitigation.model_dump(
-            exclude_none=True,
-            exclude={"id"},
-        )
-        mitigation_dict["threats"] = [{"id": t, "name": get_threat_from_id(G, t).name} for t in threat_ids]
-        dump = json.dumps(mitigation_dict, indent=None)
-        sys.stdout.write(dump)
+    mcp = build_mcp_server(G)
+    mcp.run()
