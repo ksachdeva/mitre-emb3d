@@ -107,7 +107,7 @@ def update_heatmap(
 
     # check for this category the threat_id exists in the graph
     threats = get_threats_by_category(G, category)
-    if not any(v.threat_id == threat_id for v in threats):
+    if not any(v.id == threat_id for v in threats):
         raise ValueError(f"Threat ID '{threat_id}' not found in category '{category}'")
 
     heatmap_data.update_threat_state(
