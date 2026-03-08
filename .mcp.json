@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mitre-emb3d": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mitre-emb3d", "mcp"]
+    }
+  }
+}
