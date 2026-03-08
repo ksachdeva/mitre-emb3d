@@ -53,14 +53,20 @@ class Threat(BaseModel):
 
     id: str
     type: Literal[ObjectType.VULNERABILITY]
-    name: str
-    description: str
-    cves: str = Field(validation_alias="x_mitre_emb3d_threat_CVEs")
-    cwes: str = Field(validation_alias="x_mitre_emb3d_threat_CWEs")
-    evidence: str = Field(validation_alias="x_mitre_emb3d_threat_evidence")
-    threat_id: str = Field(validation_alias="x_mitre_emb3d_threat_id")
-    maturity: str = Field(validation_alias="x_mitre_emb3d_threat_maturity")
-    category: str = Field(validation_alias="x_mitre_emb3d_threat_category")
+    name: str = Field(..., description="Name of the threat")
+    description: str = Field(..., description="Detailed description of the threat")
+    cves: str = Field(
+        validation_alias="x_mitre_emb3d_threat_CVEs", description="List of CVEs associated with the threat"
+    )
+    cwes: str = Field(
+        validation_alias="x_mitre_emb3d_threat_CWEs", description="List of CWEs associated with the threat"
+    )
+    evidence: str = Field(
+        validation_alias="x_mitre_emb3d_threat_evidence", description="Evidence supporting the threat"
+    )
+    threat_id: str = Field(validation_alias="x_mitre_emb3d_threat_id", description="Unique identifier for the threat")
+    maturity: str = Field(validation_alias="x_mitre_emb3d_threat_maturity", description="Maturity level of the threat")
+    category: str = Field(validation_alias="x_mitre_emb3d_threat_category", description="Category of the threat")
 
     def graph_id(self) -> str:
         return self.id
@@ -92,12 +98,14 @@ class Threat(BaseModel):
 
 
 class ThreatInfo(BaseModel):
-    id: str
-    name: str
+    id: str = Field(..., description="Unique identifier for the threat, prefix is 'TID-', e.g., 'TID-101'")
+    name: str = Field(..., description="Name of the threat")
 
 
 class ThreatWithMitigations(Threat):
-    mitigations: List[MitigationInfo] = Field(default_factory=list)
+    mitigations: List[MitigationInfo] = Field(
+        default_factory=list, description="List of mitigations that can address this threat"
+    )
 
     def display(self) -> str:
         base_display = super().display()
@@ -109,10 +117,12 @@ class ThreatWithMitigations(Threat):
 
 
 class Emb3dPropertyInfo(BaseModel):
-    id: str
-    name: str
+    id: str = Field(
+        ..., description="Unique identifier for the property, prefix is 'PID-', e.g. 'PID-24', 'PID-241', 'PID-242'"
+    )
+    name: str = Field(..., description="Name of the property")
 
-    sub_properties: List[Emb3dPropertyInfo] = Field(default_factory=list)
+    sub_properties: List[Emb3dPropertyInfo] = Field(default_factory=list, description="List of sub-properties")
 
 
 class Emb3dProperty(BaseModel):
@@ -120,10 +130,17 @@ class Emb3dProperty(BaseModel):
 
     id: str
     type: Literal[ObjectType.EMB3D_PROPERTY]
-    name: str
-    category: str
-    is_subproperty: Optional[bool] = None
-    property_id: Optional[str] = Field(None, validation_alias="x_mitre_emb3d_property_id")
+    name: str = Field(..., description="Name of the property")
+    category: str = Field(
+        ...,
+        description="Category of the property, e.g., 'Hardware', 'System Software', 'Application Software', 'Networking'",
+    )
+    is_subproperty: Optional[bool] = Field(None, description="Indicates if the property is a sub-property")
+    property_id: Optional[str] = Field(
+        None,
+        validation_alias="x_mitre_emb3d_property_id",
+        description="Unique identifier for the property, prefix is 'PID-', e.g., 'PID-24'",
+    )
 
     @model_validator(mode="after")
     def validate_property_id(self) -> Emb3dProperty:
@@ -139,8 +156,8 @@ class Emb3dProperty(BaseModel):
 
 
 class MitigationInfo(BaseModel):
-    id: str
-    name: str
+    id: str = Field(..., description="Unique identifier for the mitigation, prefix is 'MID-', e.g., 'MID-101'")
+    name: str = Field(..., description="Name of the mitigation")
 
 
 class Mitigation(BaseModel):
@@ -148,12 +165,21 @@ class Mitigation(BaseModel):
 
     id: str
     type: Literal[ObjectType.COURSE_OF_ACTION]
-    name: str
-    description: str
-    iec_62443_mappings: str = Field(validation_alias="x_mitre_emb3d_mitigation_IEC_62443_mappings")
-    mitigation_id: str = Field(validation_alias="x_mitre_emb3d_mitigation_id")
-    maturity: str = Field(validation_alias="x_mitre_emb3d_mitigation_maturity")
-    references: str = Field(validation_alias="x_mitre_emb3d_mitigation_references")
+    name: str = Field(..., description="Name of the mitigation")
+    description: str = Field(..., description="Detailed description of the mitigation")
+    iec_62443_mappings: str = Field(
+        validation_alias="x_mitre_emb3d_mitigation_IEC_62443_mappings", description="Mappings to IEC 62443 standards"
+    )
+    mitigation_id: str = Field(
+        validation_alias="x_mitre_emb3d_mitigation_id",
+        description="Unique identifier for the mitigation, prefix is 'MID-', e.g., 'MID-101'",
+    )
+    maturity: str = Field(
+        validation_alias="x_mitre_emb3d_mitigation_maturity", description="Maturity level of the mitigation"
+    )
+    references: str = Field(
+        validation_alias="x_mitre_emb3d_mitigation_references", description="References for the mitigation"
+    )
 
     def graph_id(self) -> str:
         return self.id
@@ -180,7 +206,10 @@ class Mitigation(BaseModel):
 
 
 class MitigationWithThreats(Mitigation):
-    threats: List[ThreatInfo] = Field(default_factory=list)
+    threats: List[ThreatInfo] = Field(
+        default_factory=list,
+        description="List of threats that this mitigation can address",
+    )
 
     def display(self) -> str:
         base_display = super().display()
