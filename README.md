@@ -1,6 +1,6 @@
 # MITRE EMB3D
 
-A CLI for https://emb3d.mitre.org/
+A CLI, TUI & MCP Server for https://emb3d.mitre.org/
 
 ## Run
 
@@ -17,31 +17,39 @@ uvx --from mitre-emb3d med --help
 uvx --from mitre-emb3d med --pprint properties Networking --level 3
 ```
 
-### Or, install as a tool
-
-```bash
-uv tool install mitre-emb3d
-```
-
 ## Add to your project
 
-```bash
-uv add mitre-emb3d --dev
-```
-
-and then run the cli via
+The project can be used both as a tool & library
 
 ```bash
-uv run med --help
-```
-
-or
-
-```bash
-uv run mitre-emb3d --help
+uv add mitre-emb3d
 ```
 
 ## Features
+
+### 4 MITRE EMB3D Categories -
+
+- Hardware
+- System Software
+- Application Software
+- Networking
+
+### What you can do (via library, CLI and MCP Server)
+
+* List device properties for a given category
+* List threats for a given category
+* List mitigations for a given threat
+* Get detailed information about a threat
+* Get detailed information about a mitigation
+* A CLI - AI Agent first (returns JSON output) / For humans add `--pprint` to see beautiful ouput
+* A TUI - Heatmap creation, reading & update using
+* An MCP Server
+*
+* ... more coming
+
+## CLI Interface
+
+Example -
 
 ```bash
 $ uv run med --pprint threats "Networking"
@@ -68,26 +76,28 @@ $ uv run med --pprint threats "Networking"
 
 
 ```markdown
-uv run med --help
 
-Usage: med [OPTIONS] COMMAND [ARGS]...
+ Usage: med [OPTIONS] COMMAND [ARGS]...
 
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --release                                TEXT  2.0.1, 2.0 ... [default: 2.0.1]                                                                                                           │
-│ --loglevel            -l                 TEXT  Set the logging level (debug, info, warning, error, critical) [default: warning]                                                          │
-│ --pprint                  --no-pprint          Whether to pretty-print the output (e.g. JSON lists) [default: no-pprint]                                                                 │
-│ --install-completion                           Install completion for the current shell.                                                                                                 │
-│ --show-completion                              Show completion for the current shell, to copy it or customize the installation.                                                          │
-│ --help                                         Show this message and exit.                                                                                                               │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ categories   List the categories                                                                                                                                                         │
-│ properties   List properties for a certain category                                                                                                                                      │
-│ threats      List threats for a certain category                                                                                                                                         │
-│ mitigations  List mitigations for a certain threat                                                                                                                                       │
-│ heatmap      Heatmap related commands                                                                                                                                                    │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --release                                TEXT  2.0.1, 2.0 ... [default: 2.0.1]                                                                                       │
+│ --loglevel            -l                 TEXT  Set the logging level (debug, info, warning, error, critical) [default: warning]                                      │
+│ --pprint                  --no-pprint          Whether to pretty-print the output (e.g. JSON lists) [default: no-pprint]                                             │
+│ --install-completion                           Install completion for the current shell.                                                                             │
+│ --show-completion                              Show completion for the current shell, to copy it or customize the installation.                                      │
+│ --help                                         Show this message and exit.                                                                                           │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ list-categories   List the categories                                                                                                                                │
+│ list-properties   List properties for a certain category                                                                                                             │
+│ list-threats      List threats for a certain category                                                                                                                │
+│ list-mitigations  List mitigations for a certain threat                                                                                                              │
+│ threat            Threat Information                                                                                                                                 │
+│ mitigation        Mitigation Information                                                                                                                             │
+│ tui               Launch the TUI heatmap viewer for a given heatmap file                                                                                             │
+│ mcp               Launch the MCP server                                                                                                                              │
+│ heatmap           Heatmap related commands                                                                                                                           │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Heatmap TUI
@@ -98,9 +108,32 @@ You can use TUI to inspect & edit the Heatmap
 uvx mitre-emb3d tui mitr-emb3d-heatmap.json
 ```
 
-
 ![Heatmap TUI](assets/tui.svg)
 
 Clicking on Threat Entry will open a screen that presents a Form, Information about Threat & Mitigations
 
 ![Heatmap TUI](assets/tui-dialog.svg)
+
+## MCP Server
+
+> At the moment only STDIO is supported
+
+For your `mcp.json` add the server like this
+
+```json
+{
+  "servers": {
+    "mitre-emb3d": {
+      "command": "uvx",
+      "args": ["mitre-emb3d", "mcp"]
+    }
+  }
+}
+
+```
+
+Use mcp inspector to play with the MCP Server
+
+```bash
+npx -y @modelcontextprotocol/inspector uvx mitre-emb3d mcp
+```
