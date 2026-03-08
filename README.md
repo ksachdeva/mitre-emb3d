@@ -42,7 +42,7 @@ uv add mitre-emb3d
 * Get detailed information about a threat
 * Get detailed information about a mitigation
 * A CLI - AI Agent first (returns JSON output) / For humans add `--pprint` to see beautiful ouput
-* A TUI - Heatmap creation, reading & update using
+* A TUI - Heatmap creation, reading & update (See TUI section below for screenshots)
 * An MCP Server
 *
 * ... more coming
@@ -70,10 +70,10 @@ $ uv run med --pprint threats "Networking"
 - TID-412: Network Routing Capability Abuse
 ```
 
-***Explore other commands using the CLI help***
-
 > Note --pprint (default is OFF, default output is JSON) for display
 
+
+***Explore other commands using the CLI help***
 
 ```markdown
 
@@ -105,6 +105,16 @@ $ uv run med --pprint threats "Networking"
 You can use TUI to inspect & edit the Heatmap
 
 ```bash
+# Make sure to initialize the heatmap
+uvx mitre-emb3d heatmap init "Project Name" "Description of Project" --output-dir .
+```
+
+- Above command will create `mitre-emb3d-heatmap.json` file in the specified output directory
+- All the entries in the heatmap are set to NOT_INVESTIGATED
+
+
+```bash
+# Show the current state (and edit) using TUI
 uvx mitre-emb3d tui mitr-emb3d-heatmap.json
 ```
 
