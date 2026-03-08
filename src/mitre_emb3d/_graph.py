@@ -6,7 +6,6 @@ import networkx as nx
 
 from ._models import (
     Emb3dCategory,
-    Emb3dProperty,
     Emb3dPropertyInfo,
     Mitigation,
     MitigationInfo,
@@ -110,7 +109,11 @@ def get_mitigations(
     threat_id: str,
 ) -> list[MitigationInfo]:
     mitigations = [
-        MitigationInfo(id=G.nodes[source]["mitigation_id"], name=G.nodes[source]["name"])
+        MitigationInfo(
+            id=G.nodes[source]["mitigation_id"],
+            name=G.nodes[source]["name"],
+            maturity=G.nodes[source]["maturity"],
+        )
         for source, target, data in G.edges(data=True)
         if data.get("relationship_type") == "mitigates" and G.nodes[target].get("threat_id") == threat_id
     ]
@@ -232,7 +235,7 @@ def make_default_heatmap(G: nx.DiGraph, name: str, description: str) -> ThreatHe
 
     def _make_threat_state(threat: ThreatInfo) -> ThreatState:
         mitigations = get_mitigations(G, threat_id=threat.id)
-        mitigations_states = [MitigationState(mitigation_id=mit.id) for mit in mitigations]
+        mitigations_states = [MitigationState(mitigation_id=mit.id, maturity=mit.maturity) for mit in mitigations]
         return ThreatState(
             threat_id=threat.id,
             resolution=ThreatResolution.NOT_INVESTIGATED,

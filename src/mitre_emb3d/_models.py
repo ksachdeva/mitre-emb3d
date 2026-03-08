@@ -6,6 +6,12 @@ from typing import Annotated, Any, List, Literal, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
+class MitigationLevel(StrEnum):
+    FOUNDATIONAL = "Foundational"
+    INTERMEDIATE = "Intermediate"
+    LEADING = "Leading"
+
+
 class Emb3dCategory(StrEnum):
     HARDWARE = "Hardware"
     SYSTEM_SW = "System Software"
@@ -178,6 +184,7 @@ class Emb3dProperty(BaseModel):
 class MitigationInfo(BaseModel):
     id: str = Field(..., description="Unique identifier for the mitigation, prefix is 'MID-', e.g., 'MID-101'")
     name: str = Field(..., description="Name of the mitigation")
+    maturity: MitigationLevel = Field(..., description="Maturity level of the mitigation")
 
 
 class Mitigation(BaseModel):
@@ -194,12 +201,21 @@ class Mitigation(BaseModel):
         validation_alias="x_mitre_emb3d_mitigation_id",
         description="Unique identifier for the mitigation, prefix is 'MID-', e.g., 'MID-101'",
     )
-    maturity: str = Field(
+    maturity: MitigationLevel = Field(
         validation_alias="x_mitre_emb3d_mitigation_maturity", description="Maturity level of the mitigation"
     )
     references: str = Field(
         validation_alias="x_mitre_emb3d_mitigation_references", description="References for the mitigation"
     )
+
+    @field_validator("maturity", mode="before")
+    @classmethod
+    def normalize_maturity(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            for ml in MitigationLevel:
+                if v.lower() == ml.value.lower():
+                    return ml.value
+        return v
 
     def graph_id(self) -> str:
         return self.id
@@ -261,6 +277,7 @@ class ThreatResolution(StrEnum):
 
 class MitigationState(BaseModel):
     mitigation_id: str
+    maturity: MitigationLevel
     applied: bool = False
 
 
