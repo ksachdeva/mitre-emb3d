@@ -1,0 +1,14 @@
+{
+  "name": "mitre-emb3d",
+  "description": "AI Agent harness for MITRE EMB3D Threat Modeling framework.",
+  "version": "0.3.0",
+  "mcpServers": {
+    "mitre-emb3d": {
+      "command": "uvx",
+      "args": [
+        "mitre-emb3d",
+        "mcp"
+      ]
+    }
+  }
+}
