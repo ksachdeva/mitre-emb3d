@@ -12,9 +12,7 @@ from rich.markdown import Markdown
 from typer import Typer
 
 from mitre_emb3d import __version__
-from mitre_emb3d._doc_loaders import download_release
 from mitre_emb3d._graph import (
-    build_split_graph,
     collect_sub_properties,
     get_mitigation_from_id,
     get_mitigations,
@@ -25,14 +23,11 @@ from mitre_emb3d._graph import (
     get_threats_by_category,
 )
 from mitre_emb3d._heatmap import heatmap_app
-from mitre_emb3d._locations import cache_directory
 from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, MitigationWithThreats, ThreatWithMitigations
-from mitre_emb3d._models import StixBundle as ST
+from mitre_emb3d._stix import load_stix_bunlde
 from mitre_emb3d._types import CmdState
 from mitre_emb3d.mcp import build_mcp_server
 from mitre_emb3d.tui._app import MEDApp
-
-_LOGGER = logging.getLogger(__name__)
 
 LOG_LEVELS = {
     "debug": logging.DEBUG,
@@ -69,20 +64,12 @@ def main(
     logging.basicConfig(level=LOG_LEVELS.get(loglevel, logging.WARNING))
     logging.getLogger("mitre_emb3d").setLevel(LOG_LEVELS.get(loglevel, logging.WARNING))
 
-    # cache file_name
-    file_name = cache_directory().joinpath(f"emb3d-stix-{release}.json")
-
-    if not file_name.exists():
-        download_release(release, file_name)
-
-    _LOGGER.info(f"Loading emb3d-stix-{release}.json from cache ...")
-    bundle_doc = ST.model_validate_json(file_name.read_text())
+    graph = load_stix_bunlde(release)
 
     ctx.ensure_object(CmdState)
     ctx.obj = CmdState()
     ctx.obj.pprint = pprint
-    ctx.obj.doc = bundle_doc
-    ctx.obj.graph = build_split_graph(bundle_doc)
+    ctx.obj.graph = graph
 
 
 @cli_app.command()

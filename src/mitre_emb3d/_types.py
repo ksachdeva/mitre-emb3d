@@ -1,11 +1,8 @@
 import networkx as nx
 
-from ._models import StixBundle
-
 
 class CmdState:
     def __init__(self) -> None:
-        self._doc: StixBundle | None = None
         self._graph: nx.DiGraph | None = None
         self._pprint: bool = False
 
@@ -26,13 +23,3 @@ class CmdState:
     @graph.setter
     def graph(self, value: nx.DiGraph) -> None:
         self._graph = value
-
-    @property
-    def doc(self) -> StixBundle:
-        if self._doc is None:
-            raise ValueError("StixBundle has not been set")
-        return self._doc
-
-    @doc.setter
-    def doc(self, value: StixBundle) -> None:
-        self._doc = value
