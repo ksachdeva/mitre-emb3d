@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Annotated, Any, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class Emb3dCategory(StrEnum):
@@ -66,7 +66,18 @@ class Threat(BaseModel):
     )
     threat_id: str = Field(validation_alias="x_mitre_emb3d_threat_id", description="Unique identifier for the threat")
     maturity: str = Field(validation_alias="x_mitre_emb3d_threat_maturity", description="Maturity level of the threat")
-    category: str = Field(validation_alias="x_mitre_emb3d_threat_category", description="Category of the threat")
+    category: Emb3dCategory = Field(
+        validation_alias="x_mitre_emb3d_threat_category", description="Category of the threat"
+    )
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            for cat in Emb3dCategory:
+                if v.lower() == cat.value.lower():
+                    return cat.value
+        return v
 
     def graph_id(self) -> str:
         return self.id
@@ -131,7 +142,7 @@ class Emb3dProperty(BaseModel):
     id: str
     type: Literal[ObjectType.EMB3D_PROPERTY]
     name: str = Field(..., description="Name of the property")
-    category: str = Field(
+    category: Emb3dCategory = Field(
         ...,
         description="Category of the property, e.g., 'Hardware', 'System Software', 'Application Software', 'Networking'",
     )
@@ -141,6 +152,15 @@ class Emb3dProperty(BaseModel):
         validation_alias="x_mitre_emb3d_property_id",
         description="Unique identifier for the property, prefix is 'PID-', e.g., 'PID-24'",
     )
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            for cat in Emb3dCategory:
+                if v.lower() == cat.value.lower():
+                    return cat.value
+        return v
 
     @model_validator(mode="after")
     def validate_property_id(self) -> Emb3dProperty:
