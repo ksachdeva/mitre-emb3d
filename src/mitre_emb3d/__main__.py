@@ -131,7 +131,8 @@ def list_properties(
         _print_properties_pprint(G, device_properties, 1, level)
     else:
         result = collect_sub_properties(G, device_properties, 1, level)
-        sys.stdout.write(json.dumps(result, indent=None))
+        adapter = TypeAdapter(List[Emb3dPropertyInfo])
+        sys.stdout.write(adapter.dump_json(result, indent=None).decode("utf-8"))
 
 
 @cli_app.command()
