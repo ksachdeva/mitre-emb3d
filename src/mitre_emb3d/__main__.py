@@ -22,11 +22,11 @@ from mitre_emb3d._graph import (
     get_threat_info_for_mitigation,
     get_threats_by_category,
 )
-from mitre_emb3d._heatmap import heatmap_app
 from mitre_emb3d._locations import data_directory
 from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, MitigationWithThreats, ThreatWithMitigations
 from mitre_emb3d._stix import load_stix_bunlde
 from mitre_emb3d._types import CmdState
+from mitre_emb3d.heatmap._cli import heatmap_app
 from mitre_emb3d.mcp import build_mcp_server
 from mitre_emb3d.tui._app import MEDApp
 
