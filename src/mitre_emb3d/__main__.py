@@ -2,7 +2,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Annotated, Any, List, cast
+from typing import Annotated, Any, List, Optional, cast
 
 import typer
 from pydantic import TypeAdapter
@@ -23,6 +23,7 @@ from mitre_emb3d._graph import (
     get_threats_by_category,
 )
 from mitre_emb3d._heatmap import heatmap_app
+from mitre_emb3d._locations import data_directory
 from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, MitigationWithThreats, ThreatWithMitigations
 from mitre_emb3d._stix import load_stix_bunlde
 from mitre_emb3d._types import CmdState
@@ -225,11 +226,26 @@ def tui(ctx: typer.Context, heatmap_file: Path) -> None:
 
 
 @cli_app.command()
-def mcp(ctx: typer.Context) -> None:
+def mcp(
+    ctx: typer.Context,
+    output_dir: Annotated[
+        Optional[Path],
+        typer.Option(
+            help="Output directory for the generated assets (e.g. heatmap)",
+            file_okay=False,
+            dir_okay=True,
+        ),
+    ] = None,
+) -> None:
     "Launch the MCP server"
 
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
-    mcp = build_mcp_server(G)
+    if output_dir is None:
+        output_dir = data_directory()
+    else:
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    mcp = build_mcp_server(G, output_dir)
     mcp.run()
