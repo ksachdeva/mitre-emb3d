@@ -1,3 +1,4 @@
+import asyncio
 from math import ceil
 from pathlib import Path
 from typing import Any
@@ -7,7 +8,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Footer, Header, Static
 
-from mitre_emb3d.heatmap import ThreatHeatMap
+from mitre_emb3d.heatmap._protocols import HeatMapStorage, ProjectName
 
 from .widgets import ThreatEntry, ThreatLegend
 
@@ -17,20 +18,25 @@ class MEDApp(App[None]):
 
     CSS_PATH = Path(__file__).parent / "mbed.scss"
 
-    def __init__(self, graph: nx.DiGraph, heatmap_file: Path, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        graph: nx.DiGraph,
+        project_name: ProjectName,
+        heatmap_storage: HeatMapStorage,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
         self._graph = graph
-        self._heatmap_file = heatmap_file
-        self._heatmap = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
-        self.title = self._heatmap.name
-        self.sub_title = self._heatmap.description
+        self._heatmap_storage = heatmap_storage
+        self._project_name = project_name
+        self._heatmap = asyncio.run(heatmap_storage.read_heatmap(project_name))
 
     @property
     def graph(self) -> nx.DiGraph:
         return self._graph
 
-    def save_heatmap(self) -> None:
-        self._heatmap_file.write_text(self._heatmap.model_dump_json(indent=2))
+    async def save_heatmap(self) -> None:
+        await self._heatmap_storage.update_heatmap(self._project_name, self._heatmap)
 
     def compose(self) -> ComposeResult:
         yield Header()

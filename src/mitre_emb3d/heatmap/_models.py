@@ -51,6 +51,18 @@ class ThreatState(BaseModel):
     audit_log: List[ThreatAuditEntry] = Field(default_factory=list)
 
 
+class HeatMapMitigationInfo(BaseModel):
+    mitigation_id: str
+    resolution: Optional[MitigationResolution] = None
+    audit_log: List[MitigationAuditEntry] = Field(default_factory=list)
+
+
+class HeatMapUpdateInfo(BaseModel):
+    resolution: Optional[ThreatResolution] = None
+    mitigation_infos: List[HeatMapMitigationInfo] = Field(default_factory=list)
+    audit_log: List[ThreatAuditEntry] = Field(default_factory=list)
+
+
 class ThreatHeatMap(BaseModel):
     mitre_version: str = Field(default="2.0.1", description="Version of the EMB3D Threat Model used for this heatmap")
     name: str = Field(..., description="Name of the Project")

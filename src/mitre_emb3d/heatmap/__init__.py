@@ -1,4 +1,5 @@
 from ._models import (
+    HeatMapUpdateInfo,
     MitigationAuditEntry,
     MitigationResolution,
     MitigationState,
@@ -7,6 +8,7 @@ from ._models import (
     ThreatResolution,
     ThreatState,
 )
+from ._protocols import HeatMapStorage, HeatMapStorageType
 from ._utils import make_default_heatmap
 
 __all__ = [
@@ -18,4 +20,7 @@ __all__ = [
     "MitigationAuditEntry",
     "ThreatAuditEntry",
     "make_default_heatmap",
+    "HeatMapUpdateInfo",
+    "HeatMapStorage",
+    "HeatMapStorageType",
 ]

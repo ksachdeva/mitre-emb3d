@@ -3,4 +3,4 @@ fmt = "ruff format"
 
 [tool.poe.tasks.mcp-list-tools]
 help = "List MCP Tools"
-cmd = "fastmcp list --input-schema --output-schema --command 'uv run med mcp --output-dir .'"
+cmd = "fastmcp list --input-schema --output-schema --command 'uv run med mcp'"

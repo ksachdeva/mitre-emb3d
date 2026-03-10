@@ -1,12 +1,11 @@
 from collections.abc import AsyncIterator
-from pathlib import Path
-from typing import Annotated, Any, List, Optional
+from typing import Annotated, Any, cast
 
 import networkx as nx
 from fastmcp import Context, FastMCP
 from fastmcp.server.lifespan import lifespan
 from fastmcp.tools.function_tool import tool as fast_mcp_tool
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from mitre_emb3d._graph import (
     collect_sub_properties,
@@ -25,54 +24,8 @@ from mitre_emb3d._models import (
     ThreatInfo,
     ThreatWithMitigations,
 )
-from mitre_emb3d.heatmap import (
-    MitigationAuditEntry,
-    MitigationResolution,
-    ThreatAuditEntry,
-    ThreatHeatMap,
-    ThreatResolution,
-    ThreatState,
-    make_default_heatmap,
-)
-
-ProjectName = Annotated[
-    str,
-    Field(
-        description="Name of the project",
-        min_length=1,
-        pattern=r"^\S+$",
-    ),
-]
-
-
-class HeatMapMitigationInfo(BaseModel):
-    mitigation_id: str
-    resolution: Optional[MitigationResolution] = None
-    audit_log: List[MitigationAuditEntry] = Field(default_factory=list)
-
-
-class HeatMapUpdateInfo(BaseModel):
-    resolution: Optional[ThreatResolution] = None
-    mitigation_infos: List[HeatMapMitigationInfo] = Field(default_factory=list)
-    audit_log: List[ThreatAuditEntry] = Field(default_factory=list)
-
-
-def _raise_if_threat_not_found(G: nx.DiGraph, category: Emb3dCategory, threat_id: str) -> None:
-    # check for this category the threat_id exists in the graph
-    threats = get_threats_by_category(G, category)
-    if not any(v.id == threat_id for v in threats):
-        raise ValueError(f"Threat ID '{threat_id}' not found in category '{category}'")
-
-
-def _heatmap_file(output_dir: Path, name: str) -> Path:
-    return output_dir / f"{name}-heatmap.json"
-
-
-def _get_or_raise_heatmap_file(output_dir: Path, name: str) -> Path:
-    heatmap_file = _heatmap_file(output_dir, name)
-    if not heatmap_file.exists():
-        raise ValueError(f"Heatmap file {heatmap_file} does not exist for project {name}")
-    return heatmap_file
+from mitre_emb3d.heatmap import HeatMapUpdateInfo, ThreatState
+from mitre_emb3d.heatmap._protocols import HeatMapStorage, ProjectName
 
 
 @fast_mcp_tool()
@@ -128,87 +81,41 @@ def get_mitigation(ctx: Context, mitigation_id: str) -> MitigationWithThreats:
 
 
 @fast_mcp_tool()
-def heatmap_init(
+async def heatmap_init(
     ctx: Context,
     name: ProjectName,
     description: Annotated[str, Field(description="Description of the project")],
 ) -> None:
     """Initialize the heatmap for a project."""
-
-    G = ctx.lifespan_context["graph"]
-    output_dir = ctx.lifespan_context["output_dir"]
-
-    heatmap_file = _heatmap_file(output_dir, name)
-
-    if heatmap_file.exists():
-        raise ValueError(f"Heatmap file {heatmap_file} already exists for project {name}")
-
-    heatmap = make_default_heatmap(
-        G,
-        name=name,
-        description=description,
-    )
-
-    heatmap_file.write_text(heatmap.model_dump_json(indent=2))
+    heatmap_storage = cast(HeatMapStorage, ctx.lifespan_context["heatmap_storage"])
+    await heatmap_storage.initialize(name, description)
 
 
 @fast_mcp_tool()
-def heatmap_read_entries(
+async def heatmap_read_entries(
     ctx: Context,
     name: ProjectName,
     category: Annotated[Emb3dCategory, Field(description="Category to list threat states for")],
 ) -> list[ThreatState]:
     """Read a heatmap entry for a specific threat."""
-
-    output_dir = ctx.lifespan_context["output_dir"]
-
-    heatmap_file = _get_or_raise_heatmap_file(output_dir, name)
-    heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
-
-    category_map = {
-        Emb3dCategory.NETWORKING: heatmap_data.networking,
-        Emb3dCategory.SYSTEM_SW: heatmap_data.system_software,
-        Emb3dCategory.APP_SW: heatmap_data.application_software,
-        Emb3dCategory.HARDWARE: heatmap_data.hardware,
-    }
-
-    return category_map.get(category, [])
+    heatmap_storage = cast(HeatMapStorage, ctx.lifespan_context["heatmap_storage"])
+    return await heatmap_storage.read_entries(name, category)
 
 
 @fast_mcp_tool()
-def heatmap_read_entry(
+async def heatmap_read_entry(
     ctx: Context,
     name: ProjectName,
     category: Annotated[Emb3dCategory, Field(description="Category to list threat states for")],
     threat_id: Annotated[str, Field(description="ID of the threat to get the state for")],
 ) -> ThreatState:
     """Read a heatmap entry for a specific threat."""
-
-    G = ctx.lifespan_context["graph"]
-    _raise_if_threat_not_found(G, category, threat_id)
-
-    output_dir = ctx.lifespan_context["output_dir"]
-    heatmap_file = _get_or_raise_heatmap_file(output_dir, name)
-    heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
-
-    category_map = {
-        Emb3dCategory.NETWORKING: heatmap_data.networking,
-        Emb3dCategory.SYSTEM_SW: heatmap_data.system_software,
-        Emb3dCategory.APP_SW: heatmap_data.application_software,
-        Emb3dCategory.HARDWARE: heatmap_data.hardware,
-    }
-
-    threats = category_map.get(category, [])
-
-    for t in threats:
-        if t.threat_id == threat_id:
-            return t
-
-    raise ValueError(f"Threat ID {threat_id} not found in category {category} for project {name}")
+    heatmap_storage = cast(HeatMapStorage, ctx.lifespan_context["heatmap_storage"])
+    return await heatmap_storage.read_entry(name, category, threat_id)
 
 
 @fast_mcp_tool()
-def heatmap_update_entry(
+async def heatmap_update_entry(
     ctx: Context,
     name: ProjectName,
     category: Annotated[Emb3dCategory, Field(description="Category to which the threat belongs to")],
@@ -219,45 +126,14 @@ def heatmap_update_entry(
     update_info: Annotated[HeatMapUpdateInfo, Field(description="Information to update the heatmap entry with")],
 ) -> None:
     """Update a heatmap entry"""
-
-    G = ctx.lifespan_context["graph"]
-
-    _raise_if_threat_not_found(G, category, threat_id)
-
-    output_dir = ctx.lifespan_context["output_dir"]
-    heatmap_file = _get_or_raise_heatmap_file(output_dir, name)
-    heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
-
-    if update_info.resolution:
-        heatmap_data.update_threat_status(category, threat_id, update_info.resolution)
-
-    for audit_entry in update_info.audit_log:
-        heatmap_data.add_audit_entry(category, threat_id, audit_entry)
-
-    for mitigation_info in update_info.mitigation_infos:
-        if mitigation_info.resolution:
-            heatmap_data.update_mitigation_status(
-                category,
-                threat_id,
-                mitigation_info.mitigation_id,
-                mitigation_info.resolution,
-            )
-
-        for mit_audit_entry in mitigation_info.audit_log:
-            heatmap_data.add_mitigation_audit_entry(
-                category,
-                threat_id,
-                mitigation_info.mitigation_id,
-                mit_audit_entry,
-            )
-
-    heatmap_file.write_text(heatmap_data.model_dump_json(indent=2))
+    heatmap_storage = cast(HeatMapStorage, ctx.lifespan_context["heatmap_storage"])
+    await heatmap_storage.update_entry(name, category, threat_id, update_info)
 
 
-def build_mcp_server(graph: nx.DiGraph, output_dir: Path) -> FastMCP:
+def build_mcp_server(graph: nx.DiGraph, heatmap_storage: HeatMapStorage) -> FastMCP:
     @lifespan
     async def app_lifespan(server: FastMCP[Any]) -> AsyncIterator[dict[str, Any]]:
-        yield {"graph": graph, "output_dir": output_dir}
+        yield {"graph": graph, "heatmap_storage": heatmap_storage}
 
     mcp = FastMCP(
         "MITRE EMB3D MCP Server",

@@ -76,17 +76,17 @@ class ThreatModal(ModalScreen[None]):
                     else:
                         yield Static("No mitigations available.")
 
-    def on_select_changed(self, event: Select.Changed) -> None:
+    async def on_select_changed(self, event: Select.Changed) -> None:
         if event.value is Select.BLANK:
             return
         widget_id = event.select.id or ""
         if widget_id == "resolution-select":
             self._threat_state.resolution = ThreatResolution(event.value)  # type: ignore
-            self.app.save_heatmap()  # type: ignore
+            await self.app.save_heatmap()  # type: ignore
         elif widget_id.startswith("mitigation-resolution-select-"):
             mitigation_id = widget_id.removeprefix("mitigation-resolution-select-")
             for mitigation_state in self._threat_state.mitigations:
                 if mitigation_state.mitigation_id == mitigation_id:
                     mitigation_state.resolution = MitigationResolution(event.value)  # type: ignore
-                    self.app.save_heatmap()  # type: ignore
+                    await self.app.save_heatmap()  # type: ignore
                     break

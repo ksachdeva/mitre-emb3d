@@ -1,8 +1,9 @@
 import json
 import logging
+import os
 import sys
 from pathlib import Path
-from typing import Annotated, Any, List, Optional, cast
+from typing import Annotated, Any, List, cast
 
 import typer
 from pydantic import TypeAdapter
@@ -26,7 +27,9 @@ from mitre_emb3d._locations import data_directory
 from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, MitigationWithThreats, ThreatWithMitigations
 from mitre_emb3d._stix import load_stix_bunlde
 from mitre_emb3d._types import CmdState
+from mitre_emb3d.heatmap import HeatMapStorageType
 from mitre_emb3d.heatmap._cli import heatmap_app
+from mitre_emb3d.heatmap.backend import JSONHeatMapStorage
 from mitre_emb3d.mcp import build_mcp_server
 
 LOG_LEVELS = {
@@ -51,6 +54,12 @@ def main(
             help="2.0.1, 2.0 ...",
         ),
     ] = "2.0.1",
+    heatmap_storage: Annotated[
+        HeatMapStorageType,
+        typer.Option(
+            help="Storage type for heatmaps (e.g. json)",
+        ),
+    ] = HeatMapStorageType.JSON,
     loglevel: Annotated[
         str,
         typer.Option(
@@ -70,6 +79,7 @@ def main(
     ctx.obj = CmdState()
     ctx.obj.pprint = pprint
     ctx.obj.graph = graph
+    ctx.obj.heatmap_storage_type = heatmap_storage
 
 
 @cli_app.command()
@@ -215,26 +225,25 @@ def mitigation(ctx: typer.Context, mitigation_id: str) -> None:
 
 
 @cli_app.command()
-def mcp(
-    ctx: typer.Context,
-    output_dir: Annotated[
-        Optional[Path],
-        typer.Option(
-            help="Output directory for the generated assets (e.g. heatmap)",
-            file_okay=False,
-            dir_okay=True,
-        ),
-    ] = None,
-) -> None:
+def mcp(ctx: typer.Context) -> None:
     "Launch the MCP server"
 
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
-    if output_dir is None:
-        output_dir = data_directory()
-    else:
-        output_dir.mkdir(parents=True, exist_ok=True)
+    assert state.heatmap_storage_type == HeatMapStorageType.JSON, (
+        "Only JSON heatmap storage is supported for the MCP server"
+    )
 
-    mcp = build_mcp_server(G, output_dir)
+    storage_dir_from_env = os.getenv("MITRE_EMB3D_HEATMAP_JSON_STORAGE_DIR", None)
+
+    if storage_dir_from_env is None:
+        storage_dir = data_directory()  # type: ignore
+    else:
+        storage_dir = Path(storage_dir_from_env)
+        storage_dir.mkdir(parents=True, exist_ok=True)
+
+    storage = JSONHeatMapStorage(G, storage_dir)
+
+    mcp = build_mcp_server(G, storage)
     mcp.run()

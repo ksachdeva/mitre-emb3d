@@ -1,70 +1,73 @@
+import asyncio
+import os
 import sys
 from pathlib import Path
 from typing import Annotated, List, cast
 
+import networkx as nx
 import typer
 from pydantic import TypeAdapter
 from typer import Typer
 
-from mitre_emb3d._graph import get_threats_by_category
+from mitre_emb3d._locations import data_directory
 from mitre_emb3d._models import Emb3dCategory
 from mitre_emb3d._types import CmdState
 
-from ._models import MitigationResolution, ThreatHeatMap, ThreatResolution, ThreatState
-from ._utils import make_default_heatmap
+from ._models import (
+    HeatMapMitigationInfo,
+    HeatMapUpdateInfo,
+    MitigationResolution,
+    ThreatResolution,
+    ThreatState,
+)
+from ._protocols import HeatMapStorage, HeatMapStorageType
+from .backend import JSONHeatMapStorage
 from .tui._app import MEDApp
 
 heatmap_app = Typer(name="heatmap", help="HeatMap related commands")
 
 
+def _get_storage(heatmap_storage_type: HeatMapStorageType, G: nx.DiGraph) -> HeatMapStorage:
+    assert heatmap_storage_type == HeatMapStorageType.JSON, "Only JSON heatmap storage is supported for the MCP server"
+
+    storage_dir_from_env = os.getenv("MITRE_EMB3D_HEATMAP_JSON_STORAGE_DIR", None)
+
+    if storage_dir_from_env is None:
+        storage_dir = data_directory()  # type: ignore
+    else:
+        storage_dir = Path(storage_dir_from_env)
+        storage_dir.mkdir(parents=True, exist_ok=True)
+
+    return JSONHeatMapStorage(G, storage_dir)
+
+
 @heatmap_app.command(name="init")
-def intialize(
-    ctx: typer.Context,
-    name: str,
-    description: str,
-    output_dir: Annotated[Path, typer.Option(help="Path to the directory that would contain the heatmap")],
-) -> None:
+def initialize(ctx: typer.Context, project_name: str, description: str) -> None:
     """Initialize a heatmap JSON file with all threats set to NOT_INVESTIGATED."""
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    storage = _get_storage(state.heatmap_storage_type, state.graph)
 
-    heatmap = make_default_heatmap(
-        G,
-        name=name,
-        description=description,
-    )
+    async def _run() -> None:
+        await storage.initialize(project_name, description)
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    heatmap_file = output_dir / "mitr-emb3d-heatmap.json"
-    heatmap_file.write_text(heatmap.model_dump_json(indent=2))
+    asyncio.run(_run())
 
 
 @heatmap_app.command(name="read")
 def read(
     ctx: typer.Context,
+    project_name: str,
     category: Annotated[Emb3dCategory, typer.Argument(help="Category to list threat states for")],
-    heatmap_file: Annotated[
-        Path,
-        typer.Option(
-            help="Path to the heatmap JSON file",
-            file_okay=True,
-            dir_okay=False,
-            exists=True,
-        ),
-    ],
 ) -> None:
     """List the threat states for the given category."""
+    state = cast(CmdState, ctx.obj)
+    storage = _get_storage(state.heatmap_storage_type, state.graph)
 
-    heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
+    async def _run() -> list[ThreatState]:
+        threats = await storage.read_entries(project_name, category)
+        return threats
 
-    category_map = {
-        Emb3dCategory.NETWORKING: heatmap_data.networking,
-        Emb3dCategory.SYSTEM_SW: heatmap_data.system_software,
-        Emb3dCategory.APP_SW: heatmap_data.application_software,
-        Emb3dCategory.HARDWARE: heatmap_data.hardware,
-    }
-
-    threats = category_map.get(category, [])
+    threats = asyncio.run(_run())
 
     adapter = TypeAdapter(List[ThreatState])
 
@@ -74,54 +77,38 @@ def read(
 @heatmap_app.command(name="update-threat-status")
 def update_threat_status(
     ctx: typer.Context,
+    project_name: str,
     category: Annotated[Emb3dCategory, typer.Argument(help="Category to update the threat state for")],
     threat_id: Annotated[
         str,
         typer.Argument(help="Threat ID to update (e.g. TID-123)"),
     ],
-    heatmap_file: Annotated[
-        Path,
-        typer.Option(
-            help="Path to the heatmap JSON file",
-            file_okay=True,
-            dir_okay=False,
-            exists=True,
-        ),
-    ],
     threat_resolution: Annotated[ThreatResolution, typer.Option("--tr", help="Threat resolution state")],
 ) -> None:
-    """Update the heatmap JSON file with the latest threat states from the graph."""
+    """Update the heatmap file with the latest threat states from the graph."""
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    storage = _get_storage(state.heatmap_storage_type, state.graph)
 
-    # check for this category the threat_id exists in the graph
-    threats = get_threats_by_category(G, category)
-    if not any(v.id == threat_id for v in threats):
-        raise ValueError(f"Threat ID '{threat_id}' not found in category '{category}'")
+    async def _run() -> None:
+        await storage.update_entry(
+            project_name,
+            category,
+            threat_id,
+            HeatMapUpdateInfo(resolution=threat_resolution),
+        )
 
-    heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
-
-    heatmap_data.update_threat_status(category, threat_id, threat_resolution)
-    heatmap_file.write_text(heatmap_data.model_dump_json(indent=2))
+    asyncio.run(_run())
 
 
 @heatmap_app.command(name="update-mitigation-status")
 def update_mitigation_status(
     ctx: typer.Context,
+    project_name: str,
     category: Annotated[Emb3dCategory, typer.Argument(help="Category to update the threat state for")],
     threat_id: Annotated[
         str,
         typer.Argument(help="Threat ID to update (e.g. TID-123)"),
-    ],
-    heatmap_file: Annotated[
-        Path,
-        typer.Option(
-            help="Path to the heatmap JSON file",
-            file_okay=True,
-            dir_okay=False,
-            exists=True,
-        ),
     ],
     mitigation_id: Annotated[
         str,
@@ -129,27 +116,35 @@ def update_mitigation_status(
     ],
     mitigation_resolution: Annotated[MitigationResolution, typer.Option("--mr", help="Mitigation resolution state")],
 ) -> None:
-    """Update the heatmap JSON file with the latest threat states from the graph."""
+    """Update the heatmap file with the latest threat states from the graph."""
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    storage = _get_storage(state.heatmap_storage_type, state.graph)
 
-    # check for this category the threat_id exists in the graph
-    threats = get_threats_by_category(G, category)
-    if not any(v.id == threat_id for v in threats):
-        raise ValueError(f"Threat ID '{threat_id}' not found in category '{category}'")
+    async def _run() -> None:
+        await storage.update_entry(
+            project_name,
+            category,
+            threat_id,
+            HeatMapUpdateInfo(
+                mitigation_infos=[
+                    HeatMapMitigationInfo(
+                        mitigation_id=mitigation_id,
+                        resolution=mitigation_resolution,
+                    )
+                ]
+            ),
+        )
 
-    heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
-
-    heatmap_data.update_mitigation_status(category, threat_id, mitigation_id, mitigation_resolution)
-    heatmap_file.write_text(heatmap_data.model_dump_json(indent=2))
+    asyncio.run(_run())
 
 
 @heatmap_app.command(name="tui")
-def tui(ctx: typer.Context, heatmap_file: Path) -> None:
+def tui(ctx: typer.Context, project_name: str) -> None:
     "Launch the TUI heatmap viewer & editor"
 
     state = cast(CmdState, ctx.obj)
+    storage = _get_storage(state.heatmap_storage_type, state.graph)
 
-    app = MEDApp(state.graph, heatmap_file)
+    app = MEDApp(state.graph, project_name, storage)
     app.run()
