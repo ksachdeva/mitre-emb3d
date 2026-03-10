@@ -28,7 +28,6 @@ from mitre_emb3d._stix import load_stix_bunlde
 from mitre_emb3d._types import CmdState
 from mitre_emb3d.heatmap._cli import heatmap_app
 from mitre_emb3d.mcp import build_mcp_server
-from mitre_emb3d.tui._app import MEDApp
 
 LOG_LEVELS = {
     "debug": logging.DEBUG,
@@ -213,16 +212,6 @@ def mitigation(ctx: typer.Context, mitigation_id: str) -> None:
     else:
         dump = mitigation_with_threats.model_dump_json(exclude_none=True, exclude={"id"}, indent=2)
         sys.stdout.write(dump)
-
-
-@cli_app.command()
-def tui(ctx: typer.Context, heatmap_file: Path) -> None:
-    "Launch the TUI heatmap viewer for a given heatmap file"
-
-    state = cast(CmdState, ctx.obj)
-
-    app = MEDApp(state.graph, heatmap_file)
-    app.run()
 
 
 @cli_app.command()

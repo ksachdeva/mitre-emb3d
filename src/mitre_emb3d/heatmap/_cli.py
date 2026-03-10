@@ -8,8 +8,8 @@ from typer import Typer
 
 from mitre_emb3d._graph import get_threats_by_category, make_default_heatmap
 from mitre_emb3d._models import Emb3dCategory, ThreatHeatMap, ThreatResolution, ThreatState
-from mitre_emb3d._models import StixBundle as ST
 from mitre_emb3d._types import CmdState
+from mitre_emb3d.tui._app import MEDApp
 
 heatmap_app = Typer(name="heatmap", help="Heatmap related commands")
 
@@ -120,3 +120,13 @@ def update_heatmap(
     )
 
     heatmap_file.write_text(heatmap_data.model_dump_json(indent=2))
+
+
+@heatmap_app.command(name="tui")
+def tui(ctx: typer.Context, heatmap_file: Path) -> None:
+    "Launch the TUI heatmap viewer & editor"
+
+    state = cast(CmdState, ctx.obj)
+
+    app = MEDApp(state.graph, heatmap_file)
+    app.run()

@@ -115,7 +115,7 @@ uvx mitre-emb3d heatmap init "Project Name" "Description of Project" --output-di
 
 ```bash
 # Show the current state (and edit) using TUI
-uvx mitre-emb3d tui mitr-emb3d-heatmap.json
+uvx mitre-emb3d heatmap tui mitr-emb3d-heatmap.json
 ```
 
 ![Heatmap TUI](assets/tui.svg)
