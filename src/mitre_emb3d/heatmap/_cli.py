@@ -9,10 +9,10 @@ from typer import Typer
 from mitre_emb3d._graph import get_threats_by_category
 from mitre_emb3d._models import Emb3dCategory
 from mitre_emb3d._types import CmdState
-from mitre_emb3d.tui._app import MEDApp
 
 from ._models import MitigationResolution, ThreatHeatMap, ThreatResolution, ThreatState
 from ._utils import make_default_heatmap
+from .tui._app import MEDApp
 
 heatmap_app = Typer(name="heatmap", help="HeatMap related commands")
 
