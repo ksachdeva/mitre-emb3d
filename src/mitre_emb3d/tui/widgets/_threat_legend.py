@@ -4,7 +4,7 @@ from textual.widgets import Label, Static
 
 from mitre_emb3d._models import ThreatResolution
 
-from ._resolution import RESOLUTION_CSS, RESOLUTION_LABEL
+from ._resolution import RESOLUTION_CSS, THREAT_RESOLUTION_LABEL
 
 
 class ThreatLegendItem(Horizontal):
@@ -18,7 +18,7 @@ class ThreatLegendItem(Horizontal):
         swatch = Static(" ")
         swatch.add_class("threat-legend-swatch", RESOLUTION_CSS[self._resolution])
         yield swatch
-        yield Label(RESOLUTION_LABEL[self._resolution])
+        yield Label(THREAT_RESOLUTION_LABEL[self._resolution])
 
 
 class ThreatLegend(Horizontal):

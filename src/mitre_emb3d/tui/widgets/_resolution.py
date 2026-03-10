@@ -8,13 +8,14 @@ RESOLUTION_CSS: dict[ThreatResolution, str] = {
     ThreatResolution.CONDITIONALLY_MITIGATED: "conditionally-mitigated",
 }
 
-RESOLUTION_LABEL: dict[ThreatResolution, str] = {
+THREAT_RESOLUTION_LABEL: dict[ThreatResolution, str] = {
     ThreatResolution.NOT_INVESTIGATED: "Not Investigated",
     ThreatResolution.NA: "N/A",
     ThreatResolution.MITIGATED: "Mitigated",
     ThreatResolution.VULNERABLE: "Vulnerable",
     ThreatResolution.CONDITIONALLY_MITIGATED: "Cond. Mitigated",
 }
+
 
 RESOLUTION_SHORT: dict[ThreatResolution, str] = {
     ThreatResolution.NOT_INVESTIGATED: "NI",

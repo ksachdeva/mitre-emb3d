@@ -1,12 +1,12 @@
 from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, List, Optional
 
 import networkx as nx
 from fastmcp import Context, FastMCP
 from fastmcp.server.lifespan import lifespan
 from fastmcp.tools.function_tool import tool as fast_mcp_tool
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from mitre_emb3d._graph import (
     collect_sub_properties,
@@ -21,8 +21,11 @@ from mitre_emb3d._graph import get_mitigations as get_mitigations_from_graph
 from mitre_emb3d._models import (
     Emb3dCategory,
     Emb3dPropertyInfo,
+    MitigationAuditEntry,
     MitigationInfo,
+    MitigationResolution,
     MitigationWithThreats,
+    ThreatAuditEntry,
     ThreatHeatMap,
     ThreatInfo,
     ThreatResolution,
@@ -38,6 +41,18 @@ ProjectName = Annotated[
         pattern=r"^\S+$",
     ),
 ]
+
+
+class HeatMapMitigationInfo(BaseModel):
+    mitigation_id: str
+    resolution: Optional[MitigationResolution] = None
+    audit_log: List[MitigationAuditEntry] = Field(default_factory=list)
+
+
+class HeatMapUpdateInfo(BaseModel):
+    resolution: Optional[ThreatResolution] = None
+    mitigation_infos: List[HeatMapMitigationInfo] = Field(default_factory=list)
+    audit_log: List[ThreatAuditEntry] = Field(default_factory=list)
 
 
 def _raise_if_threat_not_found(G: nx.DiGraph, category: Emb3dCategory, threat_id: str) -> None:
@@ -199,17 +214,7 @@ def heatmap_update_entry(
         str,
         Field(description="Threat ID to update (e.g. TID-123)"),
     ],
-    threat_resolution: Annotated[ThreatResolution, Field(description="New resolution for the threat")],
-    applied_mitigations: Annotated[
-        Optional[list[str]],
-        Field(
-            description="List of applied mitigation IDs (e.g. MID-001)",
-        ),
-    ] = None,
-    unapplied_mitigations: Annotated[
-        Optional[list[str]], Field(description="List of unapplied mitigation IDs (e.g. MID-002)")
-    ] = None,
-    notes: Annotated[Optional[str], Field(description="Additional notes about the threat state")] = None,
+    update_info: Annotated[HeatMapUpdateInfo, Field(description="Information to update the heatmap entry with")],
 ) -> None:
     """Update a heatmap entry"""
 
@@ -221,14 +226,28 @@ def heatmap_update_entry(
     heatmap_file = _get_or_raise_heatmap_file(output_dir, name)
     heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())
 
-    heatmap_data.update_threat_state(
-        category,
-        threat_id,
-        threat_resolution,
-        applied_mitigations=applied_mitigations,
-        unapplied_mitigations=unapplied_mitigations,
-        notes=notes,
-    )
+    if update_info.resolution:
+        heatmap_data.update_threat_status(category, threat_id, update_info.resolution)
+
+    for audit_entry in update_info.audit_log:
+        heatmap_data.add_audit_entry(category, threat_id, audit_entry)
+
+    for mitigation_info in update_info.mitigation_infos:
+        if mitigation_info.resolution:
+            heatmap_data.update_mitigation_status(
+                category,
+                threat_id,
+                mitigation_info.mitigation_id,
+                mitigation_info.resolution,
+            )
+
+        for mit_audit_entry in mitigation_info.audit_log:
+            heatmap_data.add_mitigation_audit_entry(
+                category,
+                threat_id,
+                mitigation_info.mitigation_id,
+                mit_audit_entry,
+            )
 
     heatmap_file.write_text(heatmap_data.model_dump_json(indent=2))
 
