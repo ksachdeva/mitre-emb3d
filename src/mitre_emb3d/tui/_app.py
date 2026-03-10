@@ -7,7 +7,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Footer, Header, Static
 
-from mitre_emb3d._models import ThreatHeatMap
+from mitre_emb3d.heatmap import ThreatHeatMap
 
 from .widgets import ThreatEntry, ThreatLegend
 

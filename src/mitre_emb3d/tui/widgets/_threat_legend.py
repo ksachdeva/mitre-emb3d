@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Label, Static
 
-from mitre_emb3d._models import ThreatResolution
+from mitre_emb3d.heatmap import ThreatResolution
 
 from ._resolution import RESOLUTION_CSS, THREAT_RESOLUTION_LABEL
 

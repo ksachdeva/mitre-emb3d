@@ -11,7 +11,8 @@ from textual.widgets import (
 )
 
 from mitre_emb3d._graph import get_mitigation_from_id, get_threat_from_id
-from mitre_emb3d._models import MitigationResolution, Threat, ThreatResolution, ThreatState
+from mitre_emb3d._models import Threat
+from mitre_emb3d.heatmap import MitigationResolution, ThreatResolution, ThreatState
 
 
 class ThreatModal(ModalScreen[None]):

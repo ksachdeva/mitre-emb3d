@@ -1,4 +1,4 @@
-from mitre_emb3d._models import ThreatResolution
+from mitre_emb3d.heatmap import ThreatResolution
 
 RESOLUTION_CSS: dict[ThreatResolution, str] = {
     ThreatResolution.NOT_INVESTIGATED: "not-investigated",

@@ -1,7 +1,7 @@
 from textual.widgets import Static
 
 from mitre_emb3d._graph import get_threat_from_id
-from mitre_emb3d._models import ThreatState
+from mitre_emb3d.heatmap import ThreatState
 
 from ._resolution import RESOLUTION_CSS, RESOLUTION_SHORT
 from ._threat_modal import ThreatModal

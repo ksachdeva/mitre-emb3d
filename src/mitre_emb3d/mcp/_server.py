@@ -15,22 +15,24 @@ from mitre_emb3d._graph import (
     get_threat_from_id,
     get_threat_info_for_mitigation,
     get_threats_by_category,
-    make_default_heatmap,
 )
 from mitre_emb3d._graph import get_mitigations as get_mitigations_from_graph
 from mitre_emb3d._models import (
     Emb3dCategory,
     Emb3dPropertyInfo,
-    MitigationAuditEntry,
     MitigationInfo,
-    MitigationResolution,
     MitigationWithThreats,
+    ThreatInfo,
+    ThreatWithMitigations,
+)
+from mitre_emb3d.heatmap import (
+    MitigationAuditEntry,
+    MitigationResolution,
     ThreatAuditEntry,
     ThreatHeatMap,
-    ThreatInfo,
     ThreatResolution,
     ThreatState,
-    ThreatWithMitigations,
+    make_default_heatmap,
 )
 
 ProjectName = Annotated[
