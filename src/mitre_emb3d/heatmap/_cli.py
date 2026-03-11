@@ -28,7 +28,12 @@ from .tui._app import MEDApp
 heatmap_app = Typer(name="heatmap", help="HeatMap related commands")
 
 
-def _get_storage(project_name: str, heatmap_storage_type: HeatMapStorageType, G: nx.DiGraph) -> HeatMapStorage:
+def _get_storage(
+    project_name: str,
+    heatmap_storage_type: HeatMapStorageType,
+    G: nx.DiGraph,
+    project_check: bool = True,
+) -> HeatMapStorage:
     assert heatmap_storage_type == HeatMapStorageType.JSON, "Only JSON heatmap storage is supported for the MCP server"
 
     storage_dir_from_env = os.getenv("MITRE_EMB3D_HEATMAP_JSON_STORAGE_DIR", None)
@@ -41,16 +46,18 @@ def _get_storage(project_name: str, heatmap_storage_type: HeatMapStorageType, G:
 
     storage = JSONHeatMapStorage(G, storage_dir)
 
-    async def _run() -> bool:
-        return await storage.project_exists(project_name)
+    if project_check:
 
-    project_exists = asyncio.run(_run())
+        async def _run() -> bool:
+            return await storage.project_exists(project_name)
 
-    if not project_exists:
-        rprint(
-            f"[red]Error:[/red] Heatmap storage not found for project {project_name}. Please run 'heatmap init' command first."
-        )
-        sys.exit(1)
+        project_exists = asyncio.run(_run())
+
+        if not project_exists:
+            rprint(
+                f"[red]Error:[/red] Heatmap storage not found for project {project_name}. Please run 'heatmap init' command first."
+            )
+            sys.exit(1)
 
     return storage
 
@@ -59,7 +66,12 @@ def _get_storage(project_name: str, heatmap_storage_type: HeatMapStorageType, G:
 def initialize(ctx: typer.Context, project_name: str, description: str) -> None:
     """Initialize a heatmap JSON file with all threats set to NOT_INVESTIGATED."""
     state = cast(CmdState, ctx.obj)
-    storage = _get_storage(project_name, state.heatmap_storage_type, state.graph)
+    storage = _get_storage(
+        project_name,
+        state.heatmap_storage_type,
+        state.graph,
+        project_check=False,
+    )
 
     async def _run() -> None:
         await storage.initialize(project_name, description)
