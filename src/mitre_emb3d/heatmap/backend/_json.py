@@ -5,7 +5,7 @@ import networkx as nx
 from mitre_emb3d._graph import get_threats_for_category
 from mitre_emb3d._models import Emb3dCategory
 from mitre_emb3d.heatmap._models import HeatMapUpdateInfo, ThreatHeatMap, ThreatState
-from mitre_emb3d.heatmap._protocols import HeatMapStorage, ProjectName
+from mitre_emb3d.heatmap._protocols import HeatMapProjectDoesNotExistError, HeatMapStorage, ProjectName
 from mitre_emb3d.heatmap._utils import make_default_heatmap
 
 
@@ -17,7 +17,7 @@ def _heatmap_file(output_dir: Path, name: ProjectName) -> Path:
 def _get_or_raise_heatmap_file(output_dir: Path, name: ProjectName) -> Path:
     heatmap_file = _heatmap_file(output_dir, name)
     if not heatmap_file.exists():
-        raise ValueError(f"Heatmap file {heatmap_file} does not exist for project {name}")
+        raise HeatMapProjectDoesNotExistError(name)
     return heatmap_file
 
 
@@ -44,6 +44,10 @@ class JSONHeatMapStorage(HeatMapStorage):
 
         heatmap_file = _heatmap_file(self._output_dir, name)
         heatmap_file.write_text(heatmap.model_dump_json(indent=2))
+
+    async def project_exists(self, name: ProjectName) -> bool:
+        heatmap_file = _heatmap_file(self._output_dir, name)
+        return heatmap_file.exists()
 
     async def read_heatmap(self, name: ProjectName) -> ThreatHeatMap:
         heatmap_file = _get_or_raise_heatmap_file(self._output_dir, name)

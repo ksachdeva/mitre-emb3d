@@ -16,6 +16,11 @@ ProjectName = Annotated[
 ]
 
 
+class HeatMapProjectDoesNotExistError(Exception):
+    def __init__(self, project_name: ProjectName) -> None:
+        super().__init__(f"Heatmap project '{project_name}' does not exist.")
+
+
 class HeatMapStorageType(StrEnum):
     JSON = "json"
     # Future storage types can be added here (e.g. SQL, NoSQL, etc.)
@@ -32,6 +37,8 @@ class HeatMapStorage(Protocol):
         threat_id: str,
         update_info: HeatMapUpdateInfo,
     ) -> None: ...
+
+    async def project_exists(self, name: ProjectName) -> bool: ...
 
     # Below are the methods for the entire heatmap
     async def read_heatmap(self, name: ProjectName) -> ThreatHeatMap: ...

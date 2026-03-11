@@ -8,7 +8,7 @@ from ._models import (
     ThreatResolution,
     ThreatState,
 )
-from ._protocols import HeatMapStorage, HeatMapStorageType
+from ._protocols import HeatMapProjectDoesNotExistError, HeatMapStorage, HeatMapStorageType
 from ._utils import make_default_heatmap
 
 __all__ = [
@@ -23,4 +23,5 @@ __all__ = [
     "HeatMapUpdateInfo",
     "HeatMapStorage",
     "HeatMapStorageType",
+    "HeatMapProjectDoesNotExistError",
 ]
