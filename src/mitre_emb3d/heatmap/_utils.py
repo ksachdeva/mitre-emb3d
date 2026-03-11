@@ -1,6 +1,6 @@
 import networkx as nx
 
-from mitre_emb3d._graph import get_mitigations, get_threats_by_category
+from mitre_emb3d._graph import get_mitigations, get_threats_for_category
 from mitre_emb3d._models import Emb3dCategory, ThreatInfo
 
 from ._models import MitigationState, ThreatHeatMap, ThreatResolution, ThreatState
@@ -21,9 +21,9 @@ def make_default_heatmap(G: nx.DiGraph, name: str, description: str) -> ThreatHe
             mitigations=mitigations_states,
         )
 
-    heatmap.hardware = [_make_threat_state(v) for v in get_threats_by_category(G, Emb3dCategory.HARDWARE)]
-    heatmap.system_software = [_make_threat_state(v) for v in get_threats_by_category(G, Emb3dCategory.SYSTEM_SW)]
-    heatmap.application_software = [_make_threat_state(v) for v in get_threats_by_category(G, Emb3dCategory.APP_SW)]
-    heatmap.networking = [_make_threat_state(v) for v in get_threats_by_category(G, Emb3dCategory.NETWORKING)]
+    heatmap.hardware = [_make_threat_state(v) for v in get_threats_for_category(G, Emb3dCategory.HARDWARE)]
+    heatmap.system_software = [_make_threat_state(v) for v in get_threats_for_category(G, Emb3dCategory.SYSTEM_SW)]
+    heatmap.application_software = [_make_threat_state(v) for v in get_threats_for_category(G, Emb3dCategory.APP_SW)]
+    heatmap.networking = [_make_threat_state(v) for v in get_threats_for_category(G, Emb3dCategory.NETWORKING)]
 
     return heatmap

@@ -2,9 +2,7 @@ from pathlib import Path
 
 import networkx as nx
 
-from mitre_emb3d._graph import (
-    get_threats_by_category,
-)
+from mitre_emb3d._graph import get_threats_for_category
 from mitre_emb3d._models import Emb3dCategory
 from mitre_emb3d.heatmap._models import HeatMapUpdateInfo, ThreatHeatMap, ThreatState
 from mitre_emb3d.heatmap._protocols import HeatMapStorage, ProjectName
@@ -25,7 +23,7 @@ def _get_or_raise_heatmap_file(output_dir: Path, name: ProjectName) -> Path:
 
 def _raise_if_threat_not_found(G: nx.DiGraph, category: Emb3dCategory, threat_id: str) -> None:
     # check for this category the threat_id exists in the graph
-    threats = get_threats_by_category(G, category)
+    threats = get_threats_for_category(G, category)
     if not any(v.id == threat_id for v in threats):
         raise ValueError(f"Threat ID '{threat_id}' not found in category '{category}'")
 

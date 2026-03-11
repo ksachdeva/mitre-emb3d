@@ -17,11 +17,12 @@ from mitre_emb3d._graph import (
     collect_sub_properties,
     get_mitigation_from_id,
     get_mitigations,
-    get_properties_by_category,
+    get_properties_for_category,
     get_subproperties,
     get_threat_from_id,
     get_threat_info_for_mitigation,
-    get_threats_by_category,
+    get_threats_for_category,
+    get_threats_for_property,
 )
 from mitre_emb3d._locations import data_directory
 from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, MitigationWithThreats, ThreatWithMitigations
@@ -135,7 +136,7 @@ def list_properties(
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
-    device_properties = get_properties_by_category(G, category)
+    device_properties = get_properties_for_category(G, category)
 
     if state.pprint:
         _print_properties_pprint(G, device_properties, 1, level)
@@ -145,14 +146,31 @@ def list_properties(
         sys.stdout.write(adapter.dump_json(result, indent=None).decode("utf-8"))
 
 
-@cli_app.command()
-def list_threats(ctx: typer.Context, category: Emb3dCategory) -> None:
+@cli_app.command(name="list-threats-for-category")
+def list_threats_for_category(ctx: typer.Context, category: Emb3dCategory) -> None:
     "List threats for a certain category"
 
     state = cast(CmdState, ctx.obj)
     G = state.graph
 
-    threats = get_threats_by_category(G, category)
+    threats = get_threats_for_category(G, category)
+
+    if state.pprint:
+        for v in threats:
+            rprint(f"- {v.id}: {v.name}")
+    else:
+        result = [{"id": v.id, "name": v.name} for v in threats]
+        sys.stdout.write(json.dumps(result, indent=None))
+
+
+@cli_app.command(name="list-threats-for-property")
+def list_threats_for_property(ctx: typer.Context, property_id: str) -> None:
+    "List threats for a certain device property"
+
+    state = cast(CmdState, ctx.obj)
+    G = state.graph
+
+    threats = get_threats_for_property(G, property_id)
 
     if state.pprint:
         for v in threats:

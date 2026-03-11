@@ -122,7 +122,31 @@ def get_mitigations(
     return mits
 
 
-def get_threats_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[ThreatInfo]:
+def get_threats_for_property(G: nx.DiGraph, property_id: str) -> list[ThreatInfo]:
+    graph_node_key = next(
+        (n for n, d in G.nodes(data=True) if d.get("property_id") == property_id),
+        None,
+    )
+    if graph_node_key is None:
+        return []
+
+    seen: set[str] = set()
+    result: list[ThreatInfo] = []
+    for successor in G.successors(graph_node_key):
+        if successor not in seen and G.nodes[successor].get("type") == str(ObjectType.VULNERABILITY):
+            seen.add(successor)
+            node_attrs = G.nodes[successor]
+            result.append(ThreatInfo(id=node_attrs["threat_id"], name=node_attrs["name"]))
+
+    vulns = sorted(
+        result,
+        key=lambda v: int(v.id.split("-")[1]),
+    )
+
+    return vulns
+
+
+def get_threats_for_category(G: nx.DiGraph, category: Emb3dCategory) -> list[ThreatInfo]:
     if category not in G:
         raise ValueError(
             f"Category '{category}' not found in graph. "
@@ -172,7 +196,7 @@ def get_threat_info_for_mitigation(G: nx.DiGraph, mitigation_id: str) -> list[Th
     ]
 
 
-def get_properties_by_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Emb3dPropertyInfo]:
+def get_properties_for_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Emb3dPropertyInfo]:
     """Return top-level property node IDs that point to the given category."""
     if category not in G:
         raise ValueError(

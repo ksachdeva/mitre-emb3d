@@ -3,11 +3,12 @@ from ._graph import (
     collect_sub_properties,
     get_mitigation_from_id,
     get_mitigations,
-    get_properties_by_category,
+    get_properties_for_category,
     get_subproperties,
     get_threat_from_id,
     get_threat_info_for_mitigation,
-    get_threats_by_category,
+    get_threats_for_category,
+    get_threats_for_property,
 )
 from ._stix import load_stix_bunlde
 
@@ -19,9 +20,10 @@ __all__ = [
     "collect_sub_properties",
     "get_mitigation_from_id",
     "get_mitigations",
-    "get_properties_by_category",
+    "get_properties_for_category",
     "get_subproperties",
     "get_threat_from_id",
     "get_threat_info_for_mitigation",
-    "get_threats_by_category",
+    "get_threats_for_category",
+    "get_threats_for_property",
 ]
