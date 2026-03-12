@@ -52,7 +52,7 @@ uv add mitre-emb3d
 Example -
 
 ```bash
-$ uv run med --pprint threats "Networking"
+$ uv run med --pprint list-threats-for-category "Networking"
 - TID-221: Authentication Bypass By Message Replay
 - TID-222: Critical System Service May Be Disabled
 - TID-310: Remotely Accessible Unauthenticated Services
@@ -79,25 +79,26 @@ $ uv run med --pprint threats "Networking"
 
  Usage: med [OPTIONS] COMMAND [ARGS]...
 
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --release                                TEXT  2.0.1, 2.0 ... [default: 2.0.1]                                                                                       │
-│ --loglevel            -l                 TEXT  Set the logging level (debug, info, warning, error, critical) [default: warning]                                      │
-│ --pprint                  --no-pprint          Whether to pretty-print the output (e.g. JSON lists) [default: no-pprint]                                             │
-│ --install-completion                           Install completion for the current shell.                                                                             │
-│ --show-completion                              Show completion for the current shell, to copy it or customize the installation.                                      │
-│ --help                                         Show this message and exit.                                                                                           │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ list-categories   List the categories                                                                                                                                │
-│ list-properties   List properties for a certain category                                                                                                             │
-│ list-threats      List threats for a certain category                                                                                                                │
-│ list-mitigations  List mitigations for a certain threat                                                                                                              │
-│ threat            Threat Information                                                                                                                                 │
-│ mitigation        Mitigation Information                                                                                                                             │
-│ tui               Launch the TUI heatmap viewer for a given heatmap file                                                                                             │
-│ mcp               Launch the MCP server                                                                                                                              │
-│ heatmap           Heatmap related commands                                                                                                                           │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --release                                TEXT    2.0.1, 2.0 ... [default: 2.0.1]                                                                       │
+│ --heatmap-storage                        [json]  Storage type for heatmaps (e.g. json) [default: json]                                                 │
+│ --loglevel            -l                 TEXT    Set the logging level (debug, info, warning, error, critical) [default: warning]                      │
+│ --pprint                  --no-pprint            Whether to pretty-print the output (e.g. JSON lists) [default: no-pprint]                             │
+│ --install-completion                             Install completion for the current shell.                                                             │
+│ --show-completion                                Show completion for the current shell, to copy it or customize the installation.                      │
+│ --help                                           Show this message and exit.                                                                           │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ list-categories            List the categories                                                                                                         │
+│ list-properties            List properties for a certain category                                                                                      │
+│ list-threats-for-category  List threats for a certain category                                                                                         │
+│ list-threats-for-property  List threats for a certain device property                                                                                  │
+│ list-mitigations           List mitigations for a certain threat                                                                                       │
+│ threat                     Threat Information                                                                                                          │
+│ mitigation                 Mitigation Information                                                                                                      │
+│ mcp                        Launch the MCP server                                                                                                       │
+│ heatmap                    HeatMap related commands                                                                                                    │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Heatmap TUI
