@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import sys
@@ -15,7 +14,14 @@ from typer import Typer
 from mitre_emb3d import __version__
 from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._locations import data_directory
-from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, MitigationWithThreats, ThreatWithMitigations
+from mitre_emb3d._models import (
+    Emb3dCategory,
+    Emb3dPropertyInfo,
+    MitigationInfo,
+    MitigationWithThreats,
+    ThreatInfo,
+    ThreatWithMitigations,
+)
 from mitre_emb3d._stix import make_mitre_graph
 from mitre_emb3d._types import CmdState
 from mitre_emb3d.heatmap import HeatMapStorageType
@@ -164,8 +170,8 @@ def list_properties_for_threat(ctx: typer.Context, threat_id: str) -> None:
         for v in properties:
             rprint(f"- {v.id}: {v.name}")
     else:
-        result = [{"id": v.id, "name": v.name} for v in properties]
-        sys.stdout.write(json.dumps(result, indent=None))
+        adapter = TypeAdapter(List[Emb3dPropertyInfo])
+        sys.stdout.write(adapter.dump_json(properties, indent=None).decode("utf-8"))
 
 
 @cli_app.command()
@@ -181,8 +187,8 @@ def list_threats_for_category(ctx: typer.Context, category: Emb3dCategory) -> No
         for v in threats:
             rprint(f"- {v.id}: {v.name}")
     else:
-        result = [{"id": v.id, "name": v.name} for v in threats]
-        sys.stdout.write(json.dumps(result, indent=None))
+        adapter = TypeAdapter(List[ThreatInfo])
+        sys.stdout.write(adapter.dump_json(threats, indent=None).decode("utf-8"))
 
 
 @cli_app.command()
@@ -198,8 +204,8 @@ def list_threats_for_property(ctx: typer.Context, property_id: str) -> None:
         for v in threats:
             rprint(f"- {v.id}: {v.name}")
     else:
-        result = [{"id": v.id, "name": v.name} for v in threats]
-        sys.stdout.write(json.dumps(result, indent=None))
+        adapter = TypeAdapter(List[ThreatInfo])
+        sys.stdout.write(adapter.dump_json(threats, indent=None).decode("utf-8"))
 
 
 @cli_app.command()
@@ -215,8 +221,8 @@ def list_mitigations(ctx: typer.Context, threat_id: str) -> None:
         for m in mitigations:
             rprint(f"- {m.id}: {m.name}")
     else:
-        result = [{"id": m.id, "name": m.name} for m in mitigations]
-        sys.stdout.write(json.dumps(result, indent=None))
+        adapter = TypeAdapter(List[MitigationInfo])
+        sys.stdout.write(adapter.dump_json(mitigations, indent=None).decode("utf-8"))
 
 
 @cli_app.command()
