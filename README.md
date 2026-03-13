@@ -113,17 +113,23 @@ You can use TUI to inspect & edit the Heatmap
 
 ```bash
 # Make sure to initialize the heatmap
-uvx mitre-emb3d heatmap init "Project Name" "Description of Project" --output-dir .
+uvx mitre-emb3d heatmap init "MyProject" "Description of Project"
 ```
 
-- Above command will create `mitre-emb3d-heatmap.json` file in the specified output directory
+- Above command will create `myproject-heatmap.json` file in the local data directory
+  * See https://specifications.freedesktop.org/basedir/latest/
+  * e.g. on macOS & linux it will be in ~/.local/share/mitre-emb3d
+
 - All the entries in the heatmap are set to NOT_INVESTIGATED
 
 
 ```bash
 # Show the current state (and edit) using TUI
-uvx mitre-emb3d heatmap tui mitr-emb3d-heatmap.json
+uvx mitre-emb3d heatmap tui MyProject
 ```
+
+> You can override the default data directory by setting `MITRE_EMB3D_HEATMAP_JSON_STORAGE_DIR` environment variable
+
 
 ![Heatmap TUI](assets/tui.svg)
 
