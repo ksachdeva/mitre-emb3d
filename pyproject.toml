@@ -1,6 +1,6 @@
 [project]
 name = "mitre-emb3d"
-version = "0.3.3"
+version = "0.4.0"
 description = "MITRE EMB3D: Library & CLI for working with the MITRE EMB3D framework."
 readme = "README.md"
 authors = [
@@ -28,10 +28,19 @@ classifiers = [
   "Operating System :: OS Independent",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "License :: OSI Approved :: Apache Software License",
+  "Typing :: Typed"
+]
+
+keywords = [
+    "MITRE",
+    "MITRE EMB3D",
+    "security",
+    "threat modeling"
 ]
 
 [project.urls]
 repository = "https://github.com/ksachdeva/mitre-emb3d"
+issues = "https://github.com/ksachdeva/mitre-emb3d/issues"
 
 [project.scripts]
 mitre-emb3d = "mitre_emb3d.__main__:cli_app"
