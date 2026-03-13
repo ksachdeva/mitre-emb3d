@@ -10,7 +10,6 @@ from textual.widgets import (
     TabPane,
 )
 
-from mitre_emb3d._graph import get_mitigation_from_id, get_properties_for_threat, get_threat_from_id
 from mitre_emb3d._models import Threat
 from mitre_emb3d.heatmap import MitigationResolution, ThreatResolution, ThreatState
 
@@ -31,7 +30,7 @@ class ThreatModal(ModalScreen[None]):
         resolution_options = [(res.name, res.value) for res in ThreatResolution]
         mitigation_resolution_options = [(res.name, res.value) for res in MitigationResolution]
 
-        threat: Threat = get_threat_from_id(self.app.graph, self._threat_state.threat_id)  # type: ignore
+        threat: Threat = self.app.graph.get_threat_from_id(self._threat_state.threat_id)  # type: ignore
 
         with Vertical(id="threat-modal-dialog"):
             yield Static(f"Threat: {self._threat_state.threat_id}", id="threat-modal-title")
@@ -45,7 +44,7 @@ class ThreatModal(ModalScreen[None]):
                         id="resolution-select",
                     )
 
-                    properties = get_properties_for_threat(self.app.graph, self._threat_state.threat_id)  # type: ignore
+                    properties = self.app.graph.get_properties_for_threat(self._threat_state.threat_id)  # type: ignore
                     if properties:
                         yield Label("Device Properties:")
                         for prop in properties:
@@ -70,9 +69,8 @@ class ThreatModal(ModalScreen[None]):
                                             id=f"mitigation-resolution-select-{mitigation_state.mitigation_id}",
                                         )
 
-                                        mitigation = get_mitigation_from_id(
-                                            self.app.graph,  # type: ignore
-                                            mitigation_state.mitigation_id,
+                                        mitigation = self.app.graph.get_mitigation_from_id(  # type: ignore
+                                            mitigation_state.mitigation_id
                                         )
 
                                         yield Markdown(

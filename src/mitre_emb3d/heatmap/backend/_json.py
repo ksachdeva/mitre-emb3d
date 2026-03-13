@@ -1,8 +1,6 @@
 from pathlib import Path
 
-import networkx as nx
-
-from mitre_emb3d._graph import get_threats_for_category
+from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._models import Emb3dCategory
 from mitre_emb3d.heatmap._models import HeatMapUpdateInfo, ThreatHeatMap, ThreatState
 from mitre_emb3d.heatmap._protocols import HeatMapProjectDoesNotExistError, HeatMapStorage, ProjectName
@@ -21,21 +19,21 @@ def _get_or_raise_heatmap_file(output_dir: Path, name: ProjectName) -> Path:
     return heatmap_file
 
 
-def _raise_if_threat_not_found(G: nx.DiGraph, category: Emb3dCategory, threat_id: str) -> None:
+def _raise_if_threat_not_found(mitre_graph: MITREGraph, category: Emb3dCategory, threat_id: str) -> None:
     # check for this category the threat_id exists in the graph
-    threats = get_threats_for_category(G, category)
+    threats = mitre_graph.get_threats_for_category(category)
     if not any(v.id == threat_id for v in threats):
         raise ValueError(f"Threat ID '{threat_id}' not found in category '{category}'")
 
 
 class JSONHeatMapStorage(HeatMapStorage):
-    def __init__(self, G: nx.DiGraph, heatmap_dir: Path) -> None:
+    def __init__(self, mitre_graph: MITREGraph, heatmap_dir: Path) -> None:
         self._output_dir = heatmap_dir
-        self._G = G
+        self._mitre_graph = mitre_graph
 
     async def initialize(self, name: ProjectName, description: str) -> None:
         heatmap = make_default_heatmap(
-            self._G,
+            self._mitre_graph,
             name=name,
             description=description,
         )
@@ -76,7 +74,7 @@ class JSONHeatMapStorage(HeatMapStorage):
         return category_map.get(category, [])
 
     async def read_entry(self, name: ProjectName, category: Emb3dCategory, threat_id: str) -> ThreatState:
-        _raise_if_threat_not_found(self._G, category, threat_id)
+        _raise_if_threat_not_found(self._mitre_graph, category, threat_id)
 
         entries = await self.read_entries(name, category)
         for entry in entries:
@@ -92,7 +90,7 @@ class JSONHeatMapStorage(HeatMapStorage):
         threat_id: str,
         update_info: HeatMapUpdateInfo,
     ) -> None:
-        _raise_if_threat_not_found(self._G, category, threat_id)
+        _raise_if_threat_not_found(self._mitre_graph, category, threat_id)
 
         heatmap_file = _get_or_raise_heatmap_file(self._output_dir, name)
         heatmap_data = ThreatHeatMap.model_validate_json(heatmap_file.read_text())

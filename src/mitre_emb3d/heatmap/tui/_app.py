@@ -3,11 +3,11 @@ from math import ceil
 from pathlib import Path
 from typing import Any
 
-import networkx as nx
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Footer, Header, Static
 
+from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d.heatmap._protocols import HeatMapStorage, ProjectName
 
 from .widgets import ThreatEntry, ThreatLegend
@@ -20,20 +20,20 @@ class MEDApp(App[None]):
 
     def __init__(
         self,
-        graph: nx.DiGraph,
+        mitre_graph: MITREGraph,
         project_name: ProjectName,
         heatmap_storage: HeatMapStorage,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        self._graph = graph
+        self._mitre_graph = mitre_graph
         self._heatmap_storage = heatmap_storage
         self._project_name = project_name
         self._heatmap = asyncio.run(heatmap_storage.read_heatmap(project_name))
 
     @property
-    def graph(self) -> nx.DiGraph:
-        return self._graph
+    def graph(self) -> MITREGraph:
+        return self._mitre_graph
 
     async def save_heatmap(self) -> None:
         await self._heatmap_storage.update_heatmap(self._project_name, self._heatmap)

@@ -2,9 +2,8 @@ import logging
 from pathlib import Path
 
 import httpx
-import networkx as nx
 
-from ._graph import build_split_graph
+from ._graph import MITREGraph
 from ._locations import cache_directory
 from ._models import StixBundle
 
@@ -21,8 +20,8 @@ def _download_release(release: str, output_path: Path) -> None:
     output_path.write_text(response.text)
 
 
-def load_stix_bunlde(release: str) -> nx.DiGraph:
-    """Download stix spec and convert it into DiGraph"""
+def make_mitre_graph(release: str) -> MITREGraph:
+    """Download stix spec and convert it into MITREGraph"""
     # cache file_name
     file_name = cache_directory().joinpath(f"emb3d-stix-{release}.json")
 
@@ -32,4 +31,4 @@ def load_stix_bunlde(release: str) -> nx.DiGraph:
     _LOGGER.info(f"Loading emb3d-stix-{release}.json from cache ...")
     bundle_doc = StixBundle.model_validate_json(file_name.read_text())
 
-    return build_split_graph(bundle_doc)
+    return MITREGraph(bundle_doc)

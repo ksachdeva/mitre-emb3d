@@ -1,11 +1,10 @@
-import networkx as nx
-
+from ._graph import MITREGraph
 from .heatmap import HeatMapStorageType
 
 
 class CmdState:
     def __init__(self) -> None:
-        self._graph: nx.DiGraph | None = None
+        self._graph: MITREGraph | None = None
         self._pprint: bool = False
         self._storage_type: HeatMapStorageType = HeatMapStorageType.JSON
 
@@ -26,11 +25,11 @@ class CmdState:
         self._pprint = value
 
     @property
-    def graph(self) -> nx.DiGraph:
+    def graph(self) -> MITREGraph:
         if self._graph is None:
             raise ValueError("Graph has not been built yet")
         return self._graph
 
     @graph.setter
-    def graph(self, value: nx.DiGraph) -> None:
+    def graph(self, value: MITREGraph) -> None:
         self._graph = value

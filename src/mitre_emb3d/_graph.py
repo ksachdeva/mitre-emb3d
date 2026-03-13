@@ -16,7 +16,7 @@ from ._models import (
 )
 
 
-def build_split_graph(bundle_doc: StixBundle) -> nx.DiGraph:
+def _build_graph(bundle_doc: StixBundle) -> nx.DiGraph:
     G = nx.DiGraph()
 
     # the ids are too and mess with display
@@ -100,172 +100,171 @@ def build_split_graph(bundle_doc: StixBundle) -> nx.DiGraph:
     return G
 
 
-def get_mitigations(
-    G: nx.DiGraph,
-    threat_id: str,
-) -> list[MitigationInfo]:
-    mitigations = [
-        MitigationInfo(
-            id=G.nodes[source]["mitigation_id"],
-            name=G.nodes[source]["name"],
-            maturity=G.nodes[source]["maturity"],
-        )
-        for source, target, data in G.edges(data=True)
-        if data.get("relationship_type") == "mitigates" and G.nodes[target].get("threat_id") == threat_id
-    ]
+class MITREGraph:
+    def __init__(self, bundle_doc: StixBundle):
+        self._graph = _build_graph(bundle_doc)
 
-    mits = sorted(
-        mitigations,
-        key=lambda v: int(v.id.split("-")[1]),
-    )
+    def get_mitigations(
+        self,
+        threat_id: str,
+    ) -> list[MitigationInfo]:
+        mitigations = [
+            MitigationInfo(
+                id=self._graph.nodes[source]["mitigation_id"],
+                name=self._graph.nodes[source]["name"],
+                maturity=self._graph.nodes[source]["maturity"],
+            )
+            for source, target, data in self._graph.edges(data=True)
+            if data.get("relationship_type") == "mitigates" and self._graph.nodes[target].get("threat_id") == threat_id
+        ]
 
-    return mits
-
-
-def get_properties_for_threat(G: nx.DiGraph, threat_id: str) -> list[Emb3dPropertyInfo]:
-    graph_node_key = next(
-        (n for n, d in G.nodes(data=True) if d.get("threat_id") == threat_id),
-        None,
-    )
-    if graph_node_key is None:
-        return []
-
-    seen: set[str] = set()
-    result: list[Emb3dPropertyInfo] = []
-    for predecessor in G.predecessors(graph_node_key):
-        if predecessor not in seen and G.nodes[predecessor].get("type") == str(ObjectType.EMB3D_PROPERTY):
-            seen.add(predecessor)
-            node_attrs = G.nodes[predecessor]
-            result.append(Emb3dPropertyInfo(id=node_attrs["property_id"], name=node_attrs["name"]))
-
-    props = sorted(
-        result,
-        key=lambda v: int(v.id.split("-")[1]),
-    )
-
-    return props
-
-
-def get_threats_for_property(G: nx.DiGraph, property_id: str) -> list[ThreatInfo]:
-    graph_node_key = next(
-        (n for n, d in G.nodes(data=True) if d.get("property_id") == property_id),
-        None,
-    )
-    if graph_node_key is None:
-        return []
-
-    seen: set[str] = set()
-    result: list[ThreatInfo] = []
-    for successor in G.successors(graph_node_key):
-        if successor not in seen and G.nodes[successor].get("type") == str(ObjectType.VULNERABILITY):
-            seen.add(successor)
-            node_attrs = G.nodes[successor]
-            result.append(ThreatInfo(id=node_attrs["threat_id"], name=node_attrs["name"]))
-
-    vulns = sorted(
-        result,
-        key=lambda v: int(v.id.split("-")[1]),
-    )
-
-    return vulns
-
-
-def get_threats_for_category(G: nx.DiGraph, category: Emb3dCategory) -> list[ThreatInfo]:
-    if category not in G:
-        raise ValueError(
-            f"Category '{category}' not found in graph. "
-            f"Valid categories: {[n for n, d in G.nodes(data=True) if d.get('type') == 'category']}"
+        mits = sorted(
+            mitigations,
+            key=lambda v: int(v.id.split("-")[1]),
         )
 
-    property_nodes = {n for n in nx.ancestors(G, category) if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)}
+        return mits
 
-    seen: set[str] = set()
-    result: list[ThreatInfo] = []
-    for prop in property_nodes:
-        for successor in G.successors(prop):
-            if successor not in seen and G.nodes[successor].get("type") == str(ObjectType.VULNERABILITY):
+    def get_properties_for_threat(self, threat_id: str) -> list[Emb3dPropertyInfo]:
+        graph_node_key = next(
+            (n for n, d in self._graph.nodes(data=True) if d.get("threat_id") == threat_id),
+            None,
+        )
+        if graph_node_key is None:
+            return []
+
+        seen: set[str] = set()
+        result: list[Emb3dPropertyInfo] = []
+        for predecessor in self._graph.predecessors(graph_node_key):
+            if predecessor not in seen and self._graph.nodes[predecessor].get("type") == str(ObjectType.EMB3D_PROPERTY):
+                seen.add(predecessor)
+                node_attrs = self._graph.nodes[predecessor]
+                result.append(Emb3dPropertyInfo(id=node_attrs["property_id"], name=node_attrs["name"]))
+
+        props = sorted(
+            result,
+            key=lambda v: int(v.id.split("-")[1]),
+        )
+
+        return props
+
+    def get_threats_for_property(self, property_id: str) -> list[ThreatInfo]:
+        graph_node_key = next(
+            (n for n, d in self._graph.nodes(data=True) if d.get("property_id") == property_id),
+            None,
+        )
+        if graph_node_key is None:
+            return []
+
+        seen: set[str] = set()
+        result: list[ThreatInfo] = []
+        for successor in self._graph.successors(graph_node_key):
+            if successor not in seen and self._graph.nodes[successor].get("type") == str(ObjectType.VULNERABILITY):
                 seen.add(successor)
-                node_attrs = G.nodes[successor]
+                node_attrs = self._graph.nodes[successor]
                 result.append(ThreatInfo(id=node_attrs["threat_id"], name=node_attrs["name"]))
 
-    vulns = sorted(
-        result,
-        key=lambda v: int(v.id.split("-")[1]),
-    )
-
-    return vulns
-
-
-def get_threat_from_id(G: nx.DiGraph, threat_id: str) -> Threat:
-    for _, d in G.nodes(data=True):
-        if d.get("type") == str(ObjectType.VULNERABILITY) and d.get("threat_id") == threat_id:
-            return Threat(**d)
-
-    raise ValueError(f"Threat with id '{threat_id}' not found in graph.")
-
-
-def get_mitigation_from_id(G: nx.DiGraph, mitigation_id: str) -> Mitigation:
-    for _, d in G.nodes(data=True):
-        if d.get("type") == str(ObjectType.COURSE_OF_ACTION) and d.get("mitigation_id") == mitigation_id:
-            return Mitigation(**d)
-
-    raise ValueError(f"Mitigation with id '{mitigation_id}' not found in graph.")
-
-
-def get_threat_info_for_mitigation(G: nx.DiGraph, mitigation_id: str) -> list[ThreatInfo]:
-    return [
-        ThreatInfo(id=G.nodes[target]["threat_id"], name=G.nodes[target]["name"])
-        for source, target, data in G.edges(data=True)
-        if data.get("relationship_type") == "mitigates" and G.nodes[source].get("mitigation_id") == mitigation_id
-    ]
-
-
-def get_properties_for_category(G: nx.DiGraph, category: Emb3dCategory) -> list[Emb3dPropertyInfo]:
-    """Return top-level property node IDs that point to the given category."""
-    if category not in G:
-        raise ValueError(
-            f"Category '{category}' not found in graph. "
-            f"Valid categories: {[n for n, d in G.nodes(data=True) if d.get('type') == 'category']}"
+        vulns = sorted(
+            result,
+            key=lambda v: int(v.id.split("-")[1]),
         )
-    return [
-        Emb3dPropertyInfo(id=G.nodes[n]["property_id"], name=G.nodes[n]["name"])
-        for n in G.predecessors(category)
-        if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
-    ]
 
+        return vulns
 
-def get_subproperties(G: nx.DiGraph, property_node: Emb3dPropertyInfo) -> list[Emb3dPropertyInfo]:
-    """Return sub-property node IDs that point to the given property node."""
-    graph_node_key = next(
-        (n for n, d in G.nodes(data=True) if d.get("property_id") == property_node.id),
-        None,
-    )
-    if graph_node_key is None:
-        return []
-    return [
-        Emb3dPropertyInfo(id=G.nodes[n]["property_id"], name=G.nodes[n]["name"])
-        for n in G.predecessors(graph_node_key)
-        if G.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
-    ]
+    def get_threats_for_category(self, category: Emb3dCategory) -> list[ThreatInfo]:
+        if category not in self._graph:
+            raise ValueError(
+                f"Category '{category}' not found in graph. "
+                f"Valid categories: {[n for n, d in self._graph.nodes(data=True) if d.get('type') == 'category']}"
+            )
 
+        property_nodes = {
+            n
+            for n in nx.ancestors(self._graph, category)
+            if self._graph.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
+        }
 
-def collect_sub_properties(
-    G: nx.DiGraph,
-    props: list[Emb3dPropertyInfo],
-    current_level: int,
-    max_level: int,
-) -> list[Emb3dPropertyInfo]:
-    result: list[Emb3dPropertyInfo] = []
-    for prop in props:
-        # item: dict[str, Any] = {"id": prop.id, "name": prop.name}
-        if current_level < max_level:
-            subs = get_subproperties(G, prop)
-            if subs:
-                prop.sub_properties = collect_sub_properties(G, subs, current_level + 1, max_level)
-        result.append(prop)
-    return result
+        seen: set[str] = set()
+        result: list[ThreatInfo] = []
+        for prop in property_nodes:
+            for successor in self._graph.successors(prop):
+                if successor not in seen and self._graph.nodes[successor].get("type") == str(ObjectType.VULNERABILITY):
+                    seen.add(successor)
+                    node_attrs = self._graph.nodes[successor]
+                    result.append(ThreatInfo(id=node_attrs["threat_id"], name=node_attrs["name"]))
 
+        vulns = sorted(
+            result,
+            key=lambda v: int(v.id.split("-")[1]),
+        )
 
-def write_graphml(G: nx.DiGraph, output_path: Path) -> None:
-    """Write the graph to a GraphML file."""
-    nx.write_graphml(G, output_path)
+        return vulns
+
+    def get_threat_from_id(self, threat_id: str) -> Threat:
+        for _, d in self._graph.nodes(data=True):
+            if d.get("type") == str(ObjectType.VULNERABILITY) and d.get("threat_id") == threat_id:
+                return Threat(**d)
+
+        raise ValueError(f"Threat with id '{threat_id}' not found in graph.")
+
+    def get_mitigation_from_id(self, mitigation_id: str) -> Mitigation:
+        for _, d in self._graph.nodes(data=True):
+            if d.get("type") == str(ObjectType.COURSE_OF_ACTION) and d.get("mitigation_id") == mitigation_id:
+                return Mitigation(**d)
+
+        raise ValueError(f"Mitigation with id '{mitigation_id}' not found in graph.")
+
+    def get_threat_info_for_mitigation(self, mitigation_id: str) -> list[ThreatInfo]:
+        return [
+            ThreatInfo(id=self._graph.nodes[target]["threat_id"], name=self._graph.nodes[target]["name"])
+            for source, target, data in self._graph.edges(data=True)
+            if data.get("relationship_type") == "mitigates"
+            and self._graph.nodes[source].get("mitigation_id") == mitigation_id
+        ]
+
+    def get_properties_for_category(self, category: Emb3dCategory) -> list[Emb3dPropertyInfo]:
+        """Return top-level property node IDs that point to the given category."""
+        if category not in self._graph:
+            raise ValueError(
+                f"Category '{category}' not found in graph. "
+                f"Valid categories: {[n for n, d in self._graph.nodes(data=True) if d.get('type') == 'category']}"
+            )
+        return [
+            Emb3dPropertyInfo(id=self._graph.nodes[n]["property_id"], name=self._graph.nodes[n]["name"])
+            for n in self._graph.predecessors(category)
+            if self._graph.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
+        ]
+
+    def get_subproperties(self, property_node: Emb3dPropertyInfo) -> list[Emb3dPropertyInfo]:
+        """Return sub-property node IDs that point to the given property node."""
+        graph_node_key = next(
+            (n for n, d in self._graph.nodes(data=True) if d.get("property_id") == property_node.id),
+            None,
+        )
+        if graph_node_key is None:
+            return []
+        return [
+            Emb3dPropertyInfo(id=self._graph.nodes[n]["property_id"], name=self._graph.nodes[n]["name"])
+            for n in self._graph.predecessors(graph_node_key)
+            if self._graph.nodes[n].get("type") == str(ObjectType.EMB3D_PROPERTY)
+        ]
+
+    def collect_sub_properties(
+        self,
+        props: list[Emb3dPropertyInfo],
+        current_level: int,
+        max_level: int,
+    ) -> list[Emb3dPropertyInfo]:
+        result: list[Emb3dPropertyInfo] = []
+        for prop in props:
+            # item: dict[str, Any] = {"id": prop.id, "name": prop.name}
+            if current_level < max_level:
+                subs = self.get_subproperties(prop)
+                if subs:
+                    prop.sub_properties = self.collect_sub_properties(subs, current_level + 1, max_level)
+            result.append(prop)
+        return result
+
+    def write_graphml(self, output_path: Path) -> None:
+        """Write the graph to a GraphML file."""
+        nx.write_graphml(self._graph, output_path)

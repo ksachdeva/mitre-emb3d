@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 from typing import Annotated, List, cast
 
-import networkx as nx
 import typer
 from pydantic import TypeAdapter
 from rich import print as rprint
 from typer import Typer
 
+from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._locations import data_directory
 from mitre_emb3d._models import Emb3dCategory
 from mitre_emb3d._types import CmdState
@@ -31,7 +31,7 @@ heatmap_app = Typer(name="heatmap", help="HeatMap related commands")
 def _get_storage(
     project_name: str,
     heatmap_storage_type: HeatMapStorageType,
-    G: nx.DiGraph,
+    mitre_graph: MITREGraph,
     project_check: bool = True,
 ) -> HeatMapStorage:
     assert heatmap_storage_type == HeatMapStorageType.JSON, "Only JSON heatmap storage is supported for the MCP server"
@@ -44,7 +44,7 @@ def _get_storage(
         storage_dir = Path(storage_dir_from_env)
         storage_dir.mkdir(parents=True, exist_ok=True)
 
-    storage = JSONHeatMapStorage(G, storage_dir)
+    storage = JSONHeatMapStorage(mitre_graph, storage_dir)
 
     if project_check:
 

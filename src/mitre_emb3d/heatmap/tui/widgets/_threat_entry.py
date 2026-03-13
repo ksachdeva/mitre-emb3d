@@ -1,6 +1,5 @@
 from textual.widgets import Static
 
-from mitre_emb3d._graph import get_threat_from_id
 from mitre_emb3d.heatmap import ThreatState
 
 from ._resolution import RESOLUTION_CSS, RESOLUTION_SHORT
@@ -18,7 +17,7 @@ class ThreatEntry(Static):
         self.add_class(RESOLUTION_CSS[threat_state.resolution])
 
     def on_mount(self) -> None:
-        threat = get_threat_from_id(self.app.graph, self.threat_id)  # type: ignore
+        threat = self.app.graph.get_threat_from_id(self.threat_id)  # type: ignore
         self.tooltip = threat.name
 
     def _refresh_display(self, _result: None) -> None:

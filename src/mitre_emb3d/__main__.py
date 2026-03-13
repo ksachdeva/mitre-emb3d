@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Annotated, Any, List, cast
+from typing import Annotated, List, cast
 
 import typer
 from pydantic import TypeAdapter
@@ -13,21 +13,10 @@ from rich.markdown import Markdown
 from typer import Typer
 
 from mitre_emb3d import __version__
-from mitre_emb3d._graph import (
-    collect_sub_properties,
-    get_mitigation_from_id,
-    get_mitigations,
-    get_properties_for_category,
-    get_properties_for_threat,
-    get_subproperties,
-    get_threat_from_id,
-    get_threat_info_for_mitigation,
-    get_threats_for_category,
-    get_threats_for_property,
-)
+from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._locations import data_directory
 from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, MitigationWithThreats, ThreatWithMitigations
-from mitre_emb3d._stix import load_stix_bunlde
+from mitre_emb3d._stix import make_mitre_graph
 from mitre_emb3d._types import CmdState
 from mitre_emb3d.heatmap import HeatMapStorageType
 from mitre_emb3d.heatmap._cli import heatmap_app
@@ -75,7 +64,7 @@ def main(
     logging.basicConfig(level=LOG_LEVELS.get(loglevel, logging.WARNING))
     logging.getLogger("mitre_emb3d").setLevel(LOG_LEVELS.get(loglevel, logging.WARNING))
 
-    graph = load_stix_bunlde(release)
+    graph = make_mitre_graph(release)
 
     ctx.ensure_object(CmdState)
     ctx.obj = CmdState()
@@ -109,7 +98,7 @@ def list_categories(ctx: typer.Context) -> None:
 
 
 def _print_properties_pprint(
-    G: Any,
+    mitre_graph: MITREGraph,
     props: list[Emb3dPropertyInfo],
     current_level: int,
     max_level: int,
@@ -118,9 +107,9 @@ def _print_properties_pprint(
     for prop in props:
         rprint(f"{'  ' * indent}- {prop.id}: {prop.name}")
         if current_level < max_level:
-            subs = get_subproperties(G, prop)
+            subs = mitre_graph.get_subproperties(prop)
             if subs:
-                _print_properties_pprint(G, subs, current_level + 1, max_level, indent + 1)
+                _print_properties_pprint(mitre_graph, subs, current_level + 1, max_level, indent + 1)
 
 
 @cli_app.command()
@@ -135,14 +124,14 @@ def list_properties_for_category(
     """List properties for a certain category"""
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    mitre_graph = state.graph
 
-    device_properties = get_properties_for_category(G, category)
+    device_properties = mitre_graph.get_properties_for_category(category)
 
     if state.pprint:
-        _print_properties_pprint(G, device_properties, 1, level)
+        _print_properties_pprint(mitre_graph, device_properties, 1, level)
     else:
-        result = collect_sub_properties(G, device_properties, 1, level)
+        result = mitre_graph.collect_sub_properties(device_properties, 1, level)
         adapter = TypeAdapter(List[Emb3dPropertyInfo])
         sys.stdout.write(adapter.dump_json(result, indent=None).decode("utf-8"))
 
@@ -152,9 +141,9 @@ def list_properties_for_threat(ctx: typer.Context, threat_id: str) -> None:
     "List properties for a certain threat"
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    mitre_graph = state.graph
 
-    properties = get_properties_for_threat(G, threat_id)
+    properties = mitre_graph.get_properties_for_threat(threat_id)
 
     if state.pprint:
         for v in properties:
@@ -169,9 +158,9 @@ def list_threats_for_category(ctx: typer.Context, category: Emb3dCategory) -> No
     "List threats for a certain category"
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    mitre_graph = state.graph
 
-    threats = get_threats_for_category(G, category)
+    threats = mitre_graph.get_threats_for_category(category)
 
     if state.pprint:
         for v in threats:
@@ -186,9 +175,9 @@ def list_threats_for_property(ctx: typer.Context, property_id: str) -> None:
     "List threats for a certain device property"
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    mitre_graph = state.graph
 
-    threats = get_threats_for_property(G, property_id)
+    threats = mitre_graph.get_threats_for_property(property_id)
 
     if state.pprint:
         for v in threats:
@@ -203,9 +192,9 @@ def list_mitigations(ctx: typer.Context, threat_id: str) -> None:
     "List mitigations for a certain threat"
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    mitre_graph = state.graph
 
-    mitigations = get_mitigations(G, threat_id)
+    mitigations = mitre_graph.get_mitigations(threat_id)
 
     if state.pprint:
         for m in mitigations:
@@ -220,10 +209,10 @@ def threat(ctx: typer.Context, threat_id: str) -> None:
     "Threat Information"
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    mitre_graph = state.graph
 
-    threat = get_threat_from_id(G, threat_id)
-    mitigations = get_mitigations(G, threat_id)
+    threat = mitre_graph.get_threat_from_id(threat_id)
+    mitigations = mitre_graph.get_mitigations(threat_id)
 
     threat_with_mitigations = ThreatWithMitigations(**threat.model_dump(), mitigations=mitigations)
 
@@ -241,10 +230,10 @@ def mitigation(ctx: typer.Context, mitigation_id: str) -> None:
     "Mitigation Information"
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    mitre_graph = state.graph
 
-    mitigation = get_mitigation_from_id(G, mitigation_id)
-    threat_infos = get_threat_info_for_mitigation(G, mitigation_id)
+    mitigation = mitre_graph.get_mitigation_from_id(mitigation_id)
+    threat_infos = mitre_graph.get_threat_info_for_mitigation(mitigation_id)
 
     mitigation_with_threats = MitigationWithThreats(
         **mitigation.model_dump(),
@@ -265,7 +254,7 @@ def mcp(ctx: typer.Context) -> None:
     "Launch the MCP server"
 
     state = cast(CmdState, ctx.obj)
-    G = state.graph
+    mitre_graph = state.graph
 
     assert state.heatmap_storage_type == HeatMapStorageType.JSON, (
         "Only JSON heatmap storage is supported for the MCP server"
@@ -279,7 +268,7 @@ def mcp(ctx: typer.Context) -> None:
         storage_dir = Path(storage_dir_from_env)
         storage_dir.mkdir(parents=True, exist_ok=True)
 
-    storage = JSONHeatMapStorage(G, storage_dir)
+    storage = JSONHeatMapStorage(mitre_graph, storage_dir)
 
-    mcp = build_mcp_server(G, storage)
+    mcp = build_mcp_server(mitre_graph, storage)
     mcp.run()
