@@ -10,7 +10,7 @@ from textual.widgets import (
     TabPane,
 )
 
-from mitre_emb3d._graph import get_mitigation_from_id, get_threat_from_id
+from mitre_emb3d._graph import get_mitigation_from_id, get_properties_for_threat, get_threat_from_id
 from mitre_emb3d._models import Threat
 from mitre_emb3d.heatmap import MitigationResolution, ThreatResolution, ThreatState
 
@@ -44,6 +44,12 @@ class ThreatModal(ModalScreen[None]):
                         value=self._threat_state.resolution,
                         id="resolution-select",
                     )
+
+                    properties = get_properties_for_threat(self.app.graph, self._threat_state.threat_id)  # type: ignore
+                    if properties:
+                        yield Label("Device Properties:")
+                        for prop in properties:
+                            yield Static(f"- {prop.id} {prop.name} ")
 
                     with VerticalScroll():
                         yield Markdown(markdown=threat.display(), id="threat-description-md")

@@ -122,6 +122,30 @@ def get_mitigations(
     return mits
 
 
+def get_properties_for_threat(G: nx.DiGraph, threat_id: str) -> list[Emb3dPropertyInfo]:
+    graph_node_key = next(
+        (n for n, d in G.nodes(data=True) if d.get("threat_id") == threat_id),
+        None,
+    )
+    if graph_node_key is None:
+        return []
+
+    seen: set[str] = set()
+    result: list[Emb3dPropertyInfo] = []
+    for predecessor in G.predecessors(graph_node_key):
+        if predecessor not in seen and G.nodes[predecessor].get("type") == str(ObjectType.EMB3D_PROPERTY):
+            seen.add(predecessor)
+            node_attrs = G.nodes[predecessor]
+            result.append(Emb3dPropertyInfo(id=node_attrs["property_id"], name=node_attrs["name"]))
+
+    props = sorted(
+        result,
+        key=lambda v: int(v.id.split("-")[1]),
+    )
+
+    return props
+
+
 def get_threats_for_property(G: nx.DiGraph, property_id: str) -> list[ThreatInfo]:
     graph_node_key = next(
         (n for n, d in G.nodes(data=True) if d.get("property_id") == property_id),

@@ -10,11 +10,12 @@ from pydantic import Field
 from mitre_emb3d._graph import (
     collect_sub_properties,
     get_mitigation_from_id,
-    get_properties_for_category,
     get_threat_from_id,
     get_threat_info_for_mitigation,
 )
 from mitre_emb3d._graph import get_mitigations as get_mitigations_from_graph
+from mitre_emb3d._graph import get_properties_for_category as get_properties_for_category_from_graph
+from mitre_emb3d._graph import get_properties_for_threat as get_properties_for_threat_from_graph
 from mitre_emb3d._graph import get_threats_for_category as get_threats_for_category_from_graph
 from mitre_emb3d._graph import get_threats_for_property as get_threats_for_property_from_graph
 from mitre_emb3d._models import (
@@ -42,11 +43,18 @@ def get_categories() -> list[Emb3dCategory]:
 
 
 @fast_mcp_tool()
-def get_properties(ctx: Context, category: Emb3dCategory, level: int) -> list[Emb3dPropertyInfo]:
+def get_properties_for_category(ctx: Context, category: Emb3dCategory, level: int) -> list[Emb3dPropertyInfo]:
     """Get a list of properties for a given category and level."""
     G = ctx.lifespan_context["graph"]
-    device_properties = get_properties_for_category(G, category)
+    device_properties = get_properties_for_category_from_graph(G, category)
     return collect_sub_properties(G, device_properties, 1, level)
+
+
+@fast_mcp_tool()
+def get_properties_for_threat(ctx: Context, threat_id: str) -> list[Emb3dPropertyInfo]:
+    """Get a list of properties for a given threat and level."""
+    G = ctx.lifespan_context["graph"]
+    return get_properties_for_threat_from_graph(G, threat_id)
 
 
 @fast_mcp_tool()
@@ -149,7 +157,8 @@ def build_mcp_server(graph: nx.DiGraph, heatmap_storage: HeatMapStorage) -> Fast
     )
 
     mcp.add_tool(get_categories)
-    mcp.add_tool(get_properties)
+    mcp.add_tool(get_properties_for_category)
+    mcp.add_tool(get_properties_for_threat)
     mcp.add_tool(get_threats_for_category)
     mcp.add_tool(get_threats_for_property)
     mcp.add_tool(get_mitigations)

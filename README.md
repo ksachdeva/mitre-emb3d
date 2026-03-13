@@ -38,6 +38,8 @@ uv add mitre-emb3d
 
 * List device properties for a given category
 * List threats for a given category
+* List threats for a given device property
+* List device properties for a certain threat
 * List mitigations for a given threat
 * Get detailed information about a threat
 * Get detailed information about a mitigation
@@ -77,28 +79,32 @@ $ uv run med --pprint list-threats-for-category "Networking"
 
 ```markdown
 
+
  Usage: med [OPTIONS] COMMAND [ARGS]...
 
-╭─ Options ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --release                                TEXT    2.0.1, 2.0 ... [default: 2.0.1]                                                                       │
-│ --heatmap-storage                        [json]  Storage type for heatmaps (e.g. json) [default: json]                                                 │
-│ --loglevel            -l                 TEXT    Set the logging level (debug, info, warning, error, critical) [default: warning]                      │
-│ --pprint                  --no-pprint            Whether to pretty-print the output (e.g. JSON lists) [default: no-pprint]                             │
-│ --install-completion                             Install completion for the current shell.                                                             │
-│ --show-completion                                Show completion for the current shell, to copy it or customize the installation.                      │
-│ --help                                           Show this message and exit.                                                                           │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ list-categories            List the categories                                                                                                         │
-│ list-properties            List properties for a certain category                                                                                      │
-│ list-threats-for-category  List threats for a certain category                                                                                         │
-│ list-threats-for-property  List threats for a certain device property                                                                                  │
-│ list-mitigations           List mitigations for a certain threat                                                                                       │
-│ threat                     Threat Information                                                                                                          │
-│ mitigation                 Mitigation Information                                                                                                      │
-│ mcp                        Launch the MCP server                                                                                                       │
-│ heatmap                    HeatMap related commands                                                                                                    │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --release                                TEXT    2.0.1, 2.0 ... [default: 2.0.1]                                                                                         │
+│ --heatmap-storage                        [json]  Storage type for heatmaps (e.g. json) [default: json]                                                                   │
+│ --loglevel            -l                 TEXT    Set the logging level (debug, info, warning, error, critical) [default: warning]                                        │
+│ --pprint                  --no-pprint            Whether to pretty-print the output (e.g. JSON lists) [default: no-pprint]                                               │
+│ --install-completion                             Install completion for the current shell.                                                                               │
+│ --show-completion                                Show completion for the current shell, to copy it or customize the installation.                                        │
+│ --help                                           Show this message and exit.                                                                                             │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ list-categories               List the categories                                                                                                                        │
+│ list-properties-for-category  List properties for a certain category                                                                                                     │
+│ list-properties-for-threat    List properties for a certain threat                                                                                                       │
+│ list-threats-for-category     List threats for a certain category                                                                                                        │
+│ list-threats-for-property     List threats for a certain device property                                                                                                 │
+│ list-mitigations              List mitigations for a certain threat                                                                                                      │
+│ threat                        Threat Information                                                                                                                         │
+│ mitigation                    Mitigation Information                                                                                                                     │
+│ mcp                           Launch the MCP server                                                                                                                      │
+│ heatmap                       HeatMap related commands                                                                                                                   │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+
 ```
 
 ## Heatmap TUI
