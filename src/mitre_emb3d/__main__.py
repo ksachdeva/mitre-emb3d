@@ -32,13 +32,28 @@ LOG_LEVELS = {
 }
 
 
-cli_app = Typer(name=f"MITRE EMB3D Client [{__version__}]")
+cli_app = Typer(name=f"MITRE EMB3D CLI [{__version__}]")
 cli_app.add_typer(heatmap_app)
+
+
+def version_callback(value: bool) -> None:
+    if value:
+        rprint(f"MITRE EMB3D CLI Version: {__version__}")
+        raise typer.Exit()
 
 
 @cli_app.callback()
 def main(
     ctx: typer.Context,
+    version: Annotated[
+        bool | None,
+        typer.Option(
+            "--version",
+            callback=version_callback,
+            is_eager=True,
+            help="Show the version of CLI and exit",
+        ),
+    ] = None,
     release: Annotated[
         str,
         typer.Option(
