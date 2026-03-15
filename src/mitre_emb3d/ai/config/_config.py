@@ -8,13 +8,15 @@ from pydantic_settings import (
     TomlConfigSettingsSource,
 )
 
-from ._agent import AgentConfig
+from ._agent import AgentConfig, LiteLlmProviderConfig
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict()
 
     property_mapper_agent: AgentConfig
+
+    litellm_provider: dict[str, LiteLlmProviderConfig]
 
     _toml_file: ClassVar[Path]
 

@@ -14,10 +14,15 @@ _USER_ID = "property_mapper_user"
 class PropertyMapper:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
+
+        # based on the provider we need to first
+        # get the appropriate LiteLlmProviderConfig
+        provider = settings.litellm_provider[settings.property_mapper_agent.litellm_provider]
+
         self._agent = PropertyMapperAgent(
             llm=LiteLlm(
-                model=settings.property_mapper_agent.llm.model_name,
-                **settings.property_mapper_agent.llm.provider_args,
+                model=provider.model_name,
+                **provider.provider_args,
             ),
             generate_content_config=self._settings.property_mapper_agent.generate_content,
         )

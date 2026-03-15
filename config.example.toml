@@ -1,6 +1,22 @@
-[property_mapper_agent.llm]
+[property_mapper_agent]
+litellm_provider = "prov-2"
+
+
+# LiteLLM Providers
+# In the examples below prov-1, prov-2 are the names that
+# need to be used as the values for "litellm_provider" for various agent configurations
+
+[litellm_provider.prov-1]
 model_name = "ollama_chat/glm-5:cloud"
 
-[property_mapper_agent.llm.provider_args]
+[litellm_provider.prov-1.provider_args]
+api_key = "ollama"
+api_base = "http://host.docker.internal:11434"
+
+
+[litellm_provider.prov-2]
+model_name = "ollama_chat/kimi-k2.5:cloud"
+
+[litellm_provider.prov-2.provider_args]
 api_key = "ollama"
 api_base = "http://host.docker.internal:11434"
