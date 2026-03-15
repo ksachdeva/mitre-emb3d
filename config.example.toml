@@ -1,6 +1,5 @@
 [property_mapper_agent]
-litellm_provider = "prov-2"
-
+litellm_provider = "prov-1"
 
 # LiteLLM Providers
 # In the examples below prov-1, prov-2 are the names that
@@ -10,7 +9,16 @@ litellm_provider = "prov-2"
 model_name = "ollama_chat/glm-5:cloud"
 provider_args = { api_key = "ollama", api_base = "http://host.docker.internal:11434" }
 
-
 [litellm_provider.prov-2]
 model_name = "ollama_chat/kimi-k2.5:cloud"
 provider_args = { api_key = "ollama", api_base = "http://host.docker.internal:11434" }
+
+[litellm_provider.gh-copilot-sonnet]
+# for github copilit models, you would be ask to verify
+# the code and token will be store locally
+model_name = "github_copilot/claude-sonnet-4.6"
+
+[litellm_provider.azure-openai]
+# make sure to adjust the endpoint & key as per your needs
+model_name = "azure/gpt-4.1"
+provider_args = { api_key = "<YOUR_KEY>", api_base = "https://xxxx.openai.azure.com", api_version = "2024-12-01-preview"}
