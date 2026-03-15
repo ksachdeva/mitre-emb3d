@@ -24,6 +24,7 @@ from mitre_emb3d._models import (
 )
 from mitre_emb3d._stix import make_mitre_graph
 from mitre_emb3d._types import CmdState
+from mitre_emb3d.ai._cli import ai_app
 from mitre_emb3d.heatmap import HeatMapStorageType
 from mitre_emb3d.heatmap._cli import heatmap_app
 from mitre_emb3d.heatmap.backend import JSONHeatMapStorage
@@ -40,6 +41,7 @@ LOG_LEVELS = {
 
 cli_app = Typer(name=f"MITRE EMB3D CLI [{__version__}]")
 cli_app.add_typer(heatmap_app)
+cli_app.add_typer(ai_app)
 
 
 def version_callback(value: bool) -> None:

@@ -1,4 +1,5 @@
 from ._graph import MITREGraph
+from .ai._typer_context import AITyperContext
 from .heatmap import HeatMapStorageType
 
 
@@ -7,6 +8,7 @@ class CmdState:
         self._graph: MITREGraph | None = None
         self._pprint: bool = False
         self._storage_type: HeatMapStorageType = HeatMapStorageType.JSON
+        self._ai: AITyperContext = AITyperContext()
 
     @property
     def heatmap_storage_type(self) -> HeatMapStorageType:
@@ -33,3 +35,7 @@ class CmdState:
     @graph.setter
     def graph(self, value: MITREGraph) -> None:
         self._graph = value
+
+    @property
+    def ai(self) -> AITyperContext:
+        return self._ai

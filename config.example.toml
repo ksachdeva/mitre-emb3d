@@ -1,0 +1,6 @@
+[property_mapper_agent.llm]
+model_name = "ollama_chat/glm-5:cloud"
+
+[property_mapper_agent.llm.provider_args]
+api_key = "ollama"
+api_base = "http://host.docker.internal:11434"
