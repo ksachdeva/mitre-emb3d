@@ -7,7 +7,7 @@ from typing import Any
 import pathspec
 from git import Repo
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 _PRE_BAKED_IGNORE_PATTERNS = [
     "**/node_modules/**",
@@ -86,8 +86,6 @@ class StatInfo(BaseModel):
 
 
 class FsEntry(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     path: Path
     kind: FsEntryKind
     stat: StatInfo
@@ -97,9 +95,7 @@ class FsEntry(BaseModel):
         return cls(path=path, kind=kind, stat=StatInfo.from_path(path))
 
 
-class RepoFileTree(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
+class RepoUnderReview(BaseModel):
     root: Path
     entries: list[FsEntry]
 
@@ -108,7 +104,7 @@ class RepoFileTree(BaseModel):
         cls,
         repo_path: Path,
         ignore_patterns: list[str] | None = None,
-    ) -> RepoFileTree:
+    ) -> RepoUnderReview:
         root = repo_path.resolve()
         repo = Repo(root)
 
