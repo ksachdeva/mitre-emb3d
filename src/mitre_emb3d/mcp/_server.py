@@ -10,8 +10,11 @@ from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._models import (
     Emb3dCategory,
     Emb3dPropertyInfo,
+    MitigationId,
     MitigationInfo,
     MitigationWithThreats,
+    PropertyId,
+    ThreatId,
     ThreatInfo,
     ThreatWithMitigations,
 )
@@ -45,7 +48,7 @@ def get_properties_for_category(ctx: Context, category: Emb3dCategory, level: in
 
 
 @fast_mcp_tool()
-def get_properties_for_threat(ctx: Context, threat_id: str) -> list[Emb3dPropertyInfo]:
+def get_properties_for_threat(ctx: Context, threat_id: ThreatId) -> list[Emb3dPropertyInfo]:
     """Get a list of properties for a given threat and level."""
     mitre_graph: MITREGraph = ctx.lifespan_context["graph"]
     return mitre_graph.get_properties_for_threat(threat_id)
@@ -59,21 +62,21 @@ def get_threats_for_category(ctx: Context, category: Emb3dCategory) -> list[Thre
 
 
 @fast_mcp_tool()
-def get_threats_for_property(ctx: Context, property_id: str) -> list[ThreatInfo]:
+def get_threats_for_property(ctx: Context, property_id: PropertyId) -> list[ThreatInfo]:
     """Get a list of threats for a given Property."""
     mitre_graph: MITREGraph = ctx.lifespan_context["graph"]
     return mitre_graph.get_threats_for_property(property_id)
 
 
 @fast_mcp_tool()
-def get_mitigations(ctx: Context, threat_id: str) -> list[MitigationInfo]:
+def get_mitigations(ctx: Context, threat_id: ThreatId) -> list[MitigationInfo]:
     """Get a list of mitigations for a given threat ID."""
     mitre_graph: MITREGraph = ctx.lifespan_context["graph"]
     return mitre_graph.get_mitigations(threat_id)
 
 
 @fast_mcp_tool()
-def get_threat(ctx: Context, threat_id: str) -> ThreatWithMitigations:
+def get_threat(ctx: Context, threat_id: ThreatId) -> ThreatWithMitigations:
     """Get a threat by its ID, along with its mitigations."""
     mitre_graph: MITREGraph = ctx.lifespan_context["graph"]
     threat = mitre_graph.get_threat_from_id(threat_id)
@@ -82,7 +85,7 @@ def get_threat(ctx: Context, threat_id: str) -> ThreatWithMitigations:
 
 
 @fast_mcp_tool()
-def get_mitigation(ctx: Context, mitigation_id: str) -> MitigationWithThreats:
+def get_mitigation(ctx: Context, mitigation_id: MitigationId) -> MitigationWithThreats:
     """Get a mitigation by its ID, along with the threats it mitigates."""
     mitre_graph: MITREGraph = ctx.lifespan_context["graph"]
     mitigation = mitre_graph.get_mitigation_from_id(mitigation_id)
@@ -117,7 +120,7 @@ async def heatmap_read_entry(
     ctx: Context,
     name: ProjectName,
     category: Annotated[Emb3dCategory, Field(description="Category to list threat states for")],
-    threat_id: Annotated[str, Field(description="ID of the threat to get the state for")],
+    threat_id: ThreatId,
 ) -> ThreatState:
     """Read a heatmap entry for a specific threat."""
     heatmap_storage = cast(HeatMapStorage, ctx.lifespan_context["heatmap_storage"])
@@ -129,10 +132,7 @@ async def heatmap_update_entry(
     ctx: Context,
     name: ProjectName,
     category: Annotated[Emb3dCategory, Field(description="Category to which the threat belongs to")],
-    threat_id: Annotated[
-        str,
-        Field(description="Threat ID to update (e.g. TID-123)"),
-    ],
+    threat_id: ThreatId,
     update_info: Annotated[HeatMapUpdateInfo, Field(description="Information to update the heatmap entry with")],
 ) -> None:
     """Update a heatmap entry"""

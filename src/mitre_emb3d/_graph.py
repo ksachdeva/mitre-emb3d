@@ -8,10 +8,13 @@ from ._models import (
     Emb3dCategory,
     Emb3dPropertyInfo,
     Mitigation,
+    MitigationId,
     MitigationInfo,
     ObjectType,
+    PropertyId,
     StixBundle,
     Threat,
+    ThreatId,
     ThreatInfo,
 )
 
@@ -106,7 +109,7 @@ class MITREGraph:
 
     def get_mitigations(
         self,
-        threat_id: str,
+        threat_id: ThreatId,
     ) -> list[MitigationInfo]:
         mitigations = [
             MitigationInfo(
@@ -125,7 +128,7 @@ class MITREGraph:
 
         return mits
 
-    def get_properties_for_threat(self, threat_id: str) -> list[Emb3dPropertyInfo]:
+    def get_properties_for_threat(self, threat_id: ThreatId) -> list[Emb3dPropertyInfo]:
         graph_node_key = next(
             (n for n, d in self._graph.nodes(data=True) if d.get("threat_id") == threat_id),
             None,
@@ -148,7 +151,7 @@ class MITREGraph:
 
         return props
 
-    def get_threats_for_property(self, property_id: str) -> list[ThreatInfo]:
+    def get_threats_for_property(self, property_id: PropertyId) -> list[ThreatInfo]:
         graph_node_key = next(
             (n for n, d in self._graph.nodes(data=True) if d.get("property_id") == property_id),
             None,
@@ -200,21 +203,21 @@ class MITREGraph:
 
         return vulns
 
-    def get_threat_from_id(self, threat_id: str) -> Threat:
+    def get_threat_from_id(self, threat_id: ThreatId) -> Threat:
         for _, d in self._graph.nodes(data=True):
             if d.get("type") == str(ObjectType.VULNERABILITY) and d.get("threat_id") == threat_id:
                 return Threat(**d)
 
         raise ValueError(f"Threat with id '{threat_id}' not found in graph.")
 
-    def get_mitigation_from_id(self, mitigation_id: str) -> Mitigation:
+    def get_mitigation_from_id(self, mitigation_id: MitigationId) -> Mitigation:
         for _, d in self._graph.nodes(data=True):
             if d.get("type") == str(ObjectType.COURSE_OF_ACTION) and d.get("mitigation_id") == mitigation_id:
                 return Mitigation(**d)
 
         raise ValueError(f"Mitigation with id '{mitigation_id}' not found in graph.")
 
-    def get_threat_info_for_mitigation(self, mitigation_id: str) -> list[ThreatInfo]:
+    def get_threat_info_for_mitigation(self, mitigation_id: MitigationId) -> list[ThreatInfo]:
         return [
             ThreatInfo(id=self._graph.nodes[target]["threat_id"], name=self._graph.nodes[target]["name"])
             for source, target, data in self._graph.edges(data=True)

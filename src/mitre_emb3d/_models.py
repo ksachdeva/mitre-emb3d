@@ -5,6 +5,10 @@ from typing import Annotated, Any, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+ThreatId = Annotated[str, Field(pattern=r"^TID-\d+$", description="Threat ID, e.g. 'TID-101'")]
+PropertyId = Annotated[str, Field(pattern=r"^PID-\d+$", description="Property ID, e.g. 'PID-24'")]
+MitigationId = Annotated[str, Field(pattern=r"^MID-\d+$", description="Mitigation ID, e.g. 'MID-101'")]
+
 
 class MitigationLevel(StrEnum):
     FOUNDATIONAL = "Foundational"
@@ -70,7 +74,9 @@ class Threat(BaseModel):
     evidence: str = Field(
         validation_alias="x_mitre_emb3d_threat_evidence", description="Evidence supporting the threat"
     )
-    threat_id: str = Field(validation_alias="x_mitre_emb3d_threat_id", description="Unique identifier for the threat")
+    threat_id: ThreatId = Field(
+        validation_alias="x_mitre_emb3d_threat_id", description="Unique identifier for the threat"
+    )
     maturity: str = Field(validation_alias="x_mitre_emb3d_threat_maturity", description="Maturity level of the threat")
     category: Emb3dCategory = Field(
         validation_alias="x_mitre_emb3d_threat_category", description="Category of the threat"
@@ -115,7 +121,7 @@ class Threat(BaseModel):
 
 
 class ThreatInfo(BaseModel):
-    id: str = Field(..., description="Unique identifier for the threat, prefix is 'TID-', e.g., 'TID-101'")
+    id: ThreatId = Field(..., description="Unique identifier for the threat, prefix is 'TID-', e.g., 'TID-101'")
     name: str = Field(..., description="Name of the threat")
 
 
@@ -134,7 +140,7 @@ class ThreatWithMitigations(Threat):
 
 
 class Emb3dPropertyInfo(BaseModel):
-    id: str = Field(
+    id: PropertyId = Field(
         ..., description="Unique identifier for the property, prefix is 'PID-', e.g. 'PID-24', 'PID-241', 'PID-242'"
     )
     name: str = Field(..., description="Name of the property")
@@ -153,7 +159,7 @@ class Emb3dProperty(BaseModel):
         description="Category of the property, e.g., 'Hardware', 'System Software', 'Application Software', 'Networking'",
     )
     is_subproperty: Optional[bool] = Field(None, description="Indicates if the property is a sub-property")
-    property_id: Optional[str] = Field(
+    property_id: Optional[PropertyId] = Field(
         None,
         validation_alias="x_mitre_emb3d_property_id",
         description="Unique identifier for the property, prefix is 'PID-', e.g., 'PID-24'",
@@ -182,7 +188,7 @@ class Emb3dProperty(BaseModel):
 
 
 class MitigationInfo(BaseModel):
-    id: str = Field(..., description="Unique identifier for the mitigation, prefix is 'MID-', e.g., 'MID-101'")
+    id: MitigationId = Field(..., description="Unique identifier for the mitigation, prefix is 'MID-', e.g., 'MID-101'")
     name: str = Field(..., description="Name of the mitigation")
     maturity: MitigationLevel = Field(..., description="Maturity level of the mitigation")
 
@@ -197,7 +203,7 @@ class Mitigation(BaseModel):
     iec_62443_mappings: str = Field(
         validation_alias="x_mitre_emb3d_mitigation_IEC_62443_mappings", description="Mappings to IEC 62443 standards"
     )
-    mitigation_id: str = Field(
+    mitigation_id: MitigationId = Field(
         validation_alias="x_mitre_emb3d_mitigation_id",
         description="Unique identifier for the mitigation, prefix is 'MID-', e.g., 'MID-101'",
     )
