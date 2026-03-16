@@ -1,4 +1,3 @@
-from google.adk.models.lite_llm import LiteLlm
 from google.adk.runners import InMemoryRunner
 from google.genai import types as genai_types
 from rich import print as rprint
@@ -14,19 +13,7 @@ _USER_ID = "property_mapper_user"
 class PropertyMapper:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
-
-        # based on the provider we need to first
-        # get the appropriate LiteLlmProviderConfig
-        provider = settings.litellm_provider[settings.property_mapper_agent.litellm_provider]
-
-        self._agent = PropertyMapperAgent(
-            llm=LiteLlm(
-                model=provider.model_name,
-                **provider.provider_args,
-            ),
-            generate_content_config=self._settings.property_mapper_agent.generate_content,
-        )
-
+        self._agent = PropertyMapperAgent(settings=self._settings)
         self._runner = InMemoryRunner(agent=self._agent, app_name=_APP_NAME)
 
     async def run(self) -> None:

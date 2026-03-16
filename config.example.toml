@@ -1,5 +1,10 @@
 [property_mapper_agent]
 litellm_provider = "prov-1"
+# The extra context is a list of file paths
+# (Markdown, text) that could enhance PropertyMapper agents
+# These would be appended after the system prompt of the agent
+extra_context = [
+]
 
 # LiteLLM Providers
 # In the examples below prov-1, prov-2 are the names that
