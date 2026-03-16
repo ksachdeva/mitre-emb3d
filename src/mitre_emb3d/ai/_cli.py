@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated, Optional, cast
 
 import typer
 from rich import print as rprint
@@ -32,7 +32,10 @@ def ai(
 
 
 @ai_app.command()
-def repo_info(ctx: typer.Context) -> None:
+def repo_info(
+    ctx: typer.Context,
+    tree_depth: Annotated[Optional[int], typer.Option(help="Depth of the tree to display")] = None,
+) -> None:
     """Get the details of the repository under review"""
     state = cast(CmdState, ctx.obj)
 
@@ -52,7 +55,11 @@ def repo_info(ctx: typer.Context) -> None:
     Console().print(table)
 
     # print the repo tree
-    tree_generator = RepoTreeGenerator.from_repo(repo_under_review)
+    tree_generator = RepoTreeGenerator.from_repo(
+        repo_under_review,
+        max_level=tree_depth,
+        show_token_counts=True,
+    )
     rprint(tree_generator.get_tree())
 
 

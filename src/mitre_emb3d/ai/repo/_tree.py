@@ -5,6 +5,16 @@ from typing import List
 
 from mitre_emb3d.ai.repo._repo import RepoUnderReview
 
+from ._token_counting import count_tokens
+
+
+def _format_tokens(count: int) -> str:
+    if count >= 1_000_000:
+        return f"{count / 1_000_000:.1f}M"
+    if count >= 1_000:
+        return f"{count / 1_000:.1f}k"
+    return f"{count}"
+
 
 class RepoTreeGenerator:
     def __init__(
@@ -13,11 +23,13 @@ class RepoTreeGenerator:
         max_level: int | None = None,
         sort_order: str = "standard",
         dirs_only: bool = False,
+        token_counts: dict[Path, int] | None = None,
     ) -> None:
         self._max_level = max_level
         self._sort_order = sort_order
         self._dirs_only = dirs_only
         self._repo = repo
+        self._token_counts = token_counts
         self._tree_str: List[str] = []
 
     @classmethod
@@ -27,12 +39,15 @@ class RepoTreeGenerator:
         max_level: int | None = None,
         sort_order: str = "standard",
         dirs_only: bool = False,
+        show_token_counts: bool = False,
     ) -> RepoTreeGenerator:
+        token_counts = count_tokens(repo) if show_token_counts else None
         return cls(
             repo=repo,
             max_level=max_level,
             sort_order=sort_order,
             dirs_only=dirs_only,
+            token_counts=token_counts,
         )
 
     def _get_direct_children(self, directory: Path) -> List[Path]:
@@ -73,7 +88,10 @@ class RepoTreeGenerator:
 
         # Add current directory to tree
         if level == 0:
-            self._tree_str.append(directory.name + "/")
+            root_label = directory.name + "/"
+            if self._token_counts is not None and directory in self._token_counts:
+                root_label += f"  [{_format_tokens(self._token_counts[directory])}]"
+            self._tree_str.append(root_label)
 
         # Get all items in the directory
         try:
@@ -93,10 +111,16 @@ class RepoTreeGenerator:
             next_prefix = prefix + ("    " if is_last else "│   ")
 
             if item.is_dir():
-                self._tree_str.append(f"{item_prefix}{item.name}/")
+                label = f"{item_prefix}{item.name}/"
+                if self._token_counts is not None and item in self._token_counts:
+                    label += f"  [{_format_tokens(self._token_counts[item])}]"
+                self._tree_str.append(label)
                 self._generate_tree(item, next_prefix, level + 1)
             elif not self._dirs_only:
-                self._tree_str.append(f"{item_prefix}{item.name}")
+                label = f"{item_prefix}{item.name}"
+                if self._token_counts is not None and item in self._token_counts:
+                    label += f"  [{_format_tokens(self._token_counts[item])}]"
+                self._tree_str.append(label)
 
     def get_tree(self) -> str:
         """Generate and return the tree as a string."""
