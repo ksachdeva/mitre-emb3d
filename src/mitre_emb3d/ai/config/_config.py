@@ -14,6 +14,8 @@ from ._agent import LiteLlmProviderConfig, ProperyMapperAgentConfig
 class Settings(BaseSettings):
     model_config = SettingsConfigDict()
 
+    ignore: list[str] = []
+
     property_mapper_agent: ProperyMapperAgentConfig
 
     litellm_provider: dict[str, LiteLlmProviderConfig]

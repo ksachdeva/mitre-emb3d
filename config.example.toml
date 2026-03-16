@@ -1,3 +1,20 @@
+# Ignore Patterns
+#
+# This uses the same spec as .gitignore
+#
+# The application already has a list of known patterns that it uses to exclude/ignore files.
+# Add your project specific patterns here; less noise makes Agents work smarter!
+ignore = [
+    "tools",
+    "tests",
+    "build",
+    "docs",
+    "libraries",
+    "firmware/configs",
+    "README.md",
+    "CONTRIBUTING.md"
+]
+
 [property_mapper_agent]
 litellm_provider = "prov-1"
 # The extra context is a list of file paths
