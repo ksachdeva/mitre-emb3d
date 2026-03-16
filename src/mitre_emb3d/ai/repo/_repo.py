@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from collections import Counter
 from enum import Enum
 from pathlib import Path, PurePath
 from typing import Any
 
 import pathspec
 from git import Repo
-from pathspec.patterns.gitwildmatch import GitWildMatchPattern
+from pathspec.patterns.gitignore.spec import GitIgnoreSpecPattern
 from pydantic import BaseModel
 
 _PRE_BAKED_IGNORE_PATTERNS = [
@@ -113,10 +114,7 @@ class RepoUnderReview(BaseModel):
 
         total_ignore_patterns = _PRE_BAKED_IGNORE_PATTERNS + (ignore_patterns or [])
 
-        spec = pathspec.PathSpec.from_lines(
-            GitWildMatchPattern,
-            total_ignore_patterns,
-        )
+        spec = pathspec.PathSpec.from_lines(GitIgnoreSpecPattern, total_ignore_patterns)
         tracked = [f for f in tracked if not spec.match_file(f)]
 
         # derive unique directory paths from all tracked file paths
@@ -167,3 +165,11 @@ class RepoUnderReview(BaseModel):
                 node = node.setdefault(part, {})
             node[rel.parts[-1]] = entry
         return result
+
+    def extension_counts(self) -> dict[str, int]:
+        """Return a mapping of file extension -> file count, sorted by count descending."""
+        counter: Counter[str] = Counter()
+        for entry in self.files():
+            ext = entry.path.suffix or "(no extension)"
+            counter[ext] += 1
+        return dict(counter.most_common())

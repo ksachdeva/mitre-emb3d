@@ -40,7 +40,7 @@ class RepoTreeGenerator:
         assert self._repo is not None
         return [e.path for e in self._repo.entries if e.path.parent == directory]
 
-    def filter_items(self, items: List[Path]) -> List[Path]:
+    def _filter_items(self, items: List[Path]) -> List[Path]:
         """Filter items based on settings."""
         filtered_items = items
 
@@ -49,9 +49,9 @@ class RepoTreeGenerator:
 
         return filtered_items
 
-    def sort_items(self, items: List[Path]) -> List[Path]:
+    def _sort_items(self, items: List[Path]) -> List[Path]:
         """Sort items based on the specified sort order."""
-        items = self.filter_items(items)
+        items = self._filter_items(items)
 
         if self._sort_order == "standard":
             # Separate directories and files
@@ -62,7 +62,7 @@ class RepoTreeGenerator:
             # Sort all items together
             return sorted(items, reverse=(self._sort_order == "desc"))
 
-    def generate_tree(
+    def _generate_tree(
         self,
         directory: Path,
         prefix: str = "",
@@ -78,7 +78,7 @@ class RepoTreeGenerator:
         # Get all items in the directory
         try:
             items = self._get_direct_children(directory)
-            items = self.sort_items(items)
+            items = self._sort_items(items)
         except PermissionError:
             self._tree_str.append(f"{prefix}├── [Permission Denied]")
             return
@@ -94,12 +94,12 @@ class RepoTreeGenerator:
 
             if item.is_dir():
                 self._tree_str.append(f"{item_prefix}{item.name}/")
-                self.generate_tree(item, next_prefix, level + 1)
+                self._generate_tree(item, next_prefix, level + 1)
             elif not self._dirs_only:
                 self._tree_str.append(f"{item_prefix}{item.name}")
 
     def get_tree(self) -> str:
         """Generate and return the tree as a string."""
         self._tree_str = []
-        self.generate_tree(self._repo.root)
+        self._generate_tree(self._repo.root)
         return "\n".join(self._tree_str)
