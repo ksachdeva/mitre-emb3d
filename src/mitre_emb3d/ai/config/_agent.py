@@ -4,7 +4,7 @@ from typing import Any
 from google.genai import types as genai_types
 from pydantic import BaseModel, Field
 
-from mitre_emb3d._models import PropertyId
+from mitre_emb3d._models import Emb3dCategory, PropertyId
 
 
 class LiteLlmProviderConfig(BaseModel):
@@ -28,6 +28,11 @@ class ProperyMapperAgentConfig(AgentConfig):
     extra_context: list[Path] = Field(
         default_factory=list,
         description="Additional context to provide to the agent",
+    )
+
+    excluded_categories: list[Emb3dCategory] = Field(
+        default_factory=list,
+        description="Categories to exclude from consideration by the agent",
     )
 
     excluded_properties: list[PropertyId] = Field(

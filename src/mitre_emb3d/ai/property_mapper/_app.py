@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from dataclasses import dataclass
+from typing import NamedTuple
 
 from google.adk.runners import InMemoryRunner
 from google.genai import types as genai_types
@@ -22,26 +23,31 @@ _USER_ID = "property_mapper_user"
 _LOGGER = logging.getLogger(__name__)
 
 
+class _PropertyIdName(NamedTuple):
+    property_id: PropertyId
+    property_name: str
+
+
 @dataclass(frozen=True)
 class _AnalysisTask:
     category: Emb3dCategory
-    property_info: tuple[PropertyId, str]
+    property_info: _PropertyIdName
     combined_content: str
 
 
-def _flatten_properties(properties: list[Emb3dPropertyInfo]) -> list[tuple[PropertyId, str]]:
-    result: list[tuple[PropertyId, str]] = []
+def _flatten_properties(properties: list[Emb3dPropertyInfo]) -> list[_PropertyIdName]:
+    result: list[_PropertyIdName] = []
     stack = list(properties)
     while stack:
         prop = stack.pop()
-        result.append((prop.id, prop.name))
+        result.append(_PropertyIdName(property_id=prop.id, property_name=prop.name))
         stack.extend(prop.sub_properties)
     return result
 
 
-def _properties_for_categories(mitre_graph: MITREGraph) -> dict[Emb3dCategory, list[tuple[PropertyId, str]]]:
+def _properties_for_categories(mitre_graph: MITREGraph) -> dict[Emb3dCategory, list[_PropertyIdName]]:
     categories = mitre_graph.get_categories()
-    result: dict[Emb3dCategory, list[tuple[PropertyId, str]]] = {}
+    result: dict[Emb3dCategory, list[_PropertyIdName]] = {}
 
     for category in categories:
         top_level_properties = mitre_graph.get_properties_for_category(category)
@@ -71,8 +77,8 @@ class PropertyMapper:
 
         new_message = PM_AGENT_ANALYSIS_PROMPT.format(
             category=task.category,
-            property_id=task.property_info[0],
-            property_name=task.property_info[1],
+            property_id=task.property_info.property_id,
+            property_name=task.property_info.property_name,
             combined_content=task.combined_content,
         )
 
@@ -115,7 +121,13 @@ class PropertyMapper:
     def _tasks_for_batch(self, combined_content: str) -> list[_AnalysisTask]:
         tasks: list[_AnalysisTask] = []
         for category, properties in self._properties_by_category.items():
+            if category in self._settings.property_mapper_agent.excluded_categories:
+                _LOGGER.info(f"Skipping category {category} ...")
+                continue
             for property_info in properties:
+                if property_info.property_id in self._settings.property_mapper_agent.excluded_properties:
+                    _LOGGER.info(f"Skipping {property_info.property_id} ...")
+                    continue
                 tasks.append(
                     _AnalysisTask(
                         category=category,

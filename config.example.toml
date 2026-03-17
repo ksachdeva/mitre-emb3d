@@ -1,3 +1,4 @@
+# Directory where to output the artifacts
 output_dir = "tmp"
 
 # Ignore Patterns
@@ -28,6 +29,9 @@ extra_context = []
 # e.g. ["PID-11", "PID-231" ..]
 excluded_properties = []
 
+# you could exclude the entire category
+excluded_categories = []
+
 # LiteLLM Providers
 # In the examples below prov-1, prov-2 are the names that
 # need to be used as the values for "litellm_provider" for various agent configurations
@@ -41,8 +45,8 @@ model_name = "ollama_chat/kimi-k2.5:cloud"
 provider_args = { api_key = "ollama", api_base = "http://host.docker.internal:11434" }
 
 [litellm_provider.gh-copilot-sonnet]
-# for github copilit models, you would be ask to verify
-# the code and token will be store locally
+# for github copilit models, you would be asked to verify
+# the code and token will be stored locally
 model_name = "github_copilot/claude-sonnet-4.6"
 
 [litellm_provider.azure-openai]
@@ -53,7 +57,7 @@ model_name = "azure/gpt-4.1"
 # Instead use environment variable corresponding to your model
 # AZURE_API_KEY & AZURE_API_BASE for OpenAI endpoints
 # See - https://docs.litellm.ai/docs/providers/azure/
-provider_args = { api_key = "<YOUR_KEY>", api_base = "", api_version = "2024-12-01-preview"}
+provider_args = { api_key = "", api_base = "", api_version = "2024-12-01-preview"}
 
 [litellm_provider.azure-ai]
 model_name = "azure_ai/gpt-5.3-codex"
@@ -63,4 +67,4 @@ model_name = "azure_ai/gpt-5.3-codex"
 # Instead use environment variable corresponding to your model
 # AZURE_AI_API_KEY & AZURE_AI_API_BASE
 # See - https://docs.litellm.ai/docs/providers/azure_ai
-provider_args = { api_key = "<YOUR_KEY>", api_base = "", api_version = "2025-04-01-preview"}
+provider_args = { api_key = "", api_base = "", api_version = "2025-04-01-preview"}
