@@ -67,6 +67,13 @@ _PRE_BAKED_IGNORE_PATTERNS = [
     "**/*.pyc",
     "**/*.pyo",
     "**/.DS_Store",
+    "**/.gitattributes",
+    "**/.editorconfig",
+    "**/.pre-commit-config.yaml",
+    "**/.python-version",
+    "**/LICENSE",
+    "**/*.code-workspace",
+    "**/poe.toml",
 ]
 
 
