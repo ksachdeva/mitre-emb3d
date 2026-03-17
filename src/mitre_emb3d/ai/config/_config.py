@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import ClassVar
 
@@ -12,7 +13,11 @@ from ._agent import LiteLlmProviderConfig, ProperyMapperAgentConfig
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict()
+    model_config = SettingsConfigDict(
+        env_file=os.getenv("MASTER_ENV_FILE", ".env"),
+        env_ignore_empty=True,
+        extra="ignore",
+    )
 
     ignore: list[str] = []
 
