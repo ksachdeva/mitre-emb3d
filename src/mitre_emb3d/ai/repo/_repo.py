@@ -106,6 +106,7 @@ class FsEntry(BaseModel):
 class RepoUnderReview(BaseModel):
     root: Path
     entries: list[FsEntry]
+    head_commit: str
 
     @classmethod
     def from_repo(
@@ -115,6 +116,8 @@ class RepoUnderReview(BaseModel):
     ) -> RepoUnderReview:
         root = repo_path.resolve()
         repo = Repo(root)
+
+        head_commit = repo.head.commit
 
         # git ls-files — respects .gitignore automatically
         tracked = repo.git.ls_files().splitlines()
@@ -136,7 +139,7 @@ class RepoUnderReview(BaseModel):
             FsEntry.from_path(d, FsEntryKind.DIR) for d in sorted(dir_paths)
         ]
 
-        return cls(root=root, entries=entries)
+        return cls(root=root, entries=entries, head_commit=str(head_commit))
 
     def files(self) -> list[FsEntry]:
         return [e for e in self.entries if e.kind == FsEntryKind.FILE]

@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,8 @@ _LOGGER = logging.getLogger(__name__)
 def _build_document(
     result: PropertyMapperOutput,
     mitre_graph: MITREGraph,
+    head_commit: str,
+    ai_model: str,
 ) -> dict[str, Any]:
     prop = mitre_graph.get_property_from_id(result.property_id)
 
@@ -29,6 +32,9 @@ def _build_document(
         )
 
     return {
+        "ai_model": ai_model,
+        "head_commit": head_commit,
+        "updated_at": datetime.now(UTC),
         "property_id": result.property_id,
         "property_name": prop.name,
         "category": prop.category.value,
@@ -41,6 +47,8 @@ def write_property_results(
     results: dict[PropertyId, PropertyMapperOutput],
     mitre_graph: MITREGraph,
     output_dir: Path,
+    head_commit: str,
+    ai_model: str,
 ) -> None:
     properties_dir = output_dir / "properties"
     properties_dir.mkdir(parents=True, exist_ok=True)
@@ -49,7 +57,7 @@ def write_property_results(
     yaml.default_flow_style = False
 
     for pid, result in results.items():
-        doc = _build_document(result, mitre_graph)
+        doc = _build_document(result, mitre_graph, head_commit, ai_model)
         out_path = properties_dir / f"{pid}.yaml"
 
         with out_path.open("w") as f:

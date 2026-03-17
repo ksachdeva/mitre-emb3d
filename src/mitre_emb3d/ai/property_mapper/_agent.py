@@ -70,3 +70,9 @@ class PropertyMapperAgent(LlmAgent):
             output_schema=PropertyMapperOutput,
             output_key="PROPERTY_MAPPER_OUTPUT",
         )
+
+        self._lite_llm = llm
+
+    @property
+    def lite_llm(self) -> LiteLlm:
+        return self._lite_llm

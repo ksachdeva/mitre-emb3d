@@ -68,8 +68,8 @@ class PropertyMapper:
         self._agent = PropertyMapperAgent(settings=self._settings)
         self._runner = InMemoryRunner(agent=self._agent, app_name=_APP_NAME)
         self._naive_context_provider = NaiveContextProvider(rur)
-
         self._properties_by_category = _properties_for_categories(self._mitre_graph)
+        self._rur = rur
 
     async def _run_analysis(self, task: _AnalysisTask) -> PropertyMapperOutput:
         # create a new session
@@ -187,4 +187,10 @@ class PropertyMapper:
             accumulated = self._merge_results(list(accumulated.values()) + list(batch_merged.values()))
 
             # now dump them in the file system
-            write_property_results(accumulated, self._mitre_graph, self._settings.output_dir)
+            write_property_results(
+                accumulated,
+                self._mitre_graph,
+                self._settings.output_dir,
+                self._rur.head_commit,
+                self._agent.lite_llm.model,
+            )
