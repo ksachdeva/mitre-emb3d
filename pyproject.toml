@@ -16,6 +16,7 @@ dependencies = [
     "networkx>=3.6.1",
     "pathspec>=1.0.3",
     "pydantic>=2.12.5",
+    "ruamel-yaml>=0.19.1",
     "textual>=8.0.2",
     "typer>=0.16.0",
     "xdg-base-dirs>=6.0.2",

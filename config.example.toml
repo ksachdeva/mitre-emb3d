@@ -1,3 +1,5 @@
+output_dir = "tmp"
+
 # Ignore Patterns
 #
 # This uses the same spec as .gitignore
@@ -16,7 +18,7 @@ ignore = [
 ]
 
 [property_mapper_agent]
-litellm_provider = "prov-1"
+litellm_provider = "gh-copilot-sonnet"
 # The extra context is a list of file paths
 # (Markdown, text) that could enhance PropertyMapper agents
 # These would be appended after the system prompt of the agent
@@ -31,7 +33,7 @@ excluded_properties = []
 # need to be used as the values for "litellm_provider" for various agent configurations
 
 [litellm_provider.prov-1]
-model_name = "ollama_chat/glm-5:cloud"
+model_name = "ollama_chat/devstral-small-2:24b"
 provider_args = { api_key = "ollama", api_base = "http://host.docker.internal:11434" }
 
 [litellm_provider.prov-2]

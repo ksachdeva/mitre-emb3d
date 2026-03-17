@@ -6,6 +6,7 @@ import networkx as nx
 
 from ._models import (
     Emb3dCategory,
+    Emb3dProperty,
     Emb3dPropertyInfo,
     Mitigation,
     MitigationId,
@@ -217,6 +218,13 @@ class MITREGraph:
                 return Threat(**d)
 
         raise ValueError(f"Threat with id '{threat_id}' not found in graph.")
+
+    def get_property_from_id(self, property_id: PropertyId) -> Emb3dProperty:
+        for _, d in self._graph.nodes(data=True):
+            if d.get("type") == str(ObjectType.EMB3D_PROPERTY) and d.get("property_id") == property_id:
+                return Emb3dProperty(**d)
+
+        raise ValueError(f"Property with id '{property_id}' not found in graph.")
 
     def get_mitigation_from_id(self, mitigation_id: MitigationId) -> Mitigation:
         for _, d in self._graph.nodes(data=True):

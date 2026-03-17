@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 
@@ -11,8 +12,9 @@ from mitre_emb3d.ai.config import Settings
 from mitre_emb3d.ai.context.providers import NaiveContextProvider
 from mitre_emb3d.ai.repo import FsEntry, RepoUnderReview
 
-from ._agent import PropertyMapperAgent
+from ._agent import PropertyMapperAgent, PropertyMapperOutput
 from ._prompt import PM_AGENT_ANALYSIS_PROMPT
+from ._writer import write_property_results
 
 _APP_NAME = "property_mapper_app"
 _USER_ID = "property_mapper_user"
@@ -63,7 +65,7 @@ class PropertyMapper:
 
         self._properties_by_category = _properties_for_categories(self._mitre_graph)
 
-    async def _run_analysis(self, task: _AnalysisTask) -> None:
+    async def _run_analysis(self, task: _AnalysisTask) -> PropertyMapperOutput:
         # create a new session
         session = await self._runner.session_service.create_session(app_name=_APP_NAME, user_id=_USER_ID)
 
@@ -87,10 +89,6 @@ class PropertyMapper:
             if event.content and event.content.parts and event.content.parts[0].text:
                 rprint(f"{event.author}:\n {event.content.parts[0].text}")
 
-            if event.is_final_response():
-                rprint("Final response received, ending analysis for this task.")
-                break
-
         refreshed_session = await self._runner.session_service.get_session(
             app_name=_APP_NAME,
             user_id=_USER_ID,
@@ -101,7 +99,9 @@ class PropertyMapper:
 
         response = refreshed_session.state.get("PROPERTY_MAPPER_OUTPUT", None)
 
-        rprint(response)
+        assert response is not None, "Expected PROPERTY_MAPPER_OUTPUT in session state"
+
+        return PropertyMapperOutput.model_validate(response)
 
     @staticmethod
     def _combine_batch(batch: list[FsEntry]) -> str:
@@ -125,14 +125,54 @@ class PropertyMapper:
                 )
         return tasks
 
+    def _merge_results(self, results: list[PropertyMapperOutput]) -> dict[PropertyId, PropertyMapperOutput]:
+        merged: dict[PropertyId, PropertyMapperOutput] = {}
+        for result in results:
+            existing = merged.get(result.property_id, None)
+            if existing is None:
+                merged[result.property_id] = result
+                continue
+
+            if not result.is_relevant:
+                continue
+
+            existing.is_relevant = True
+            seen = {(e.file_name, e.code_snippet) for e in existing.evidence}
+            for ev in result.evidence:
+                if (ev.file_name, ev.code_snippet) not in seen:
+                    existing.evidence.append(ev)
+                    seen.add((ev.file_name, ev.code_snippet))
+
+        return merged
+
     async def run(self) -> None:
         batches = self._naive_context_provider.get_context(
             self._settings.property_mapper_agent.max_token_per_analysis,
         )
+        accumulated: dict[PropertyId, PropertyMapperOutput] = {}
+
+        sem = asyncio.Semaphore(4)
+
+        async def _guarded_analysis(task: _AnalysisTask) -> PropertyMapperOutput:
+            async with sem:
+                return await self._run_analysis(task)
 
         for batch in batches:
+            # process one batch at a time, but run analyses for properties in parallel
             combined_content = self._combine_batch(batch)
             tasks = self._tasks_for_batch(combined_content)
 
-            for _, task in enumerate(tasks):
-                await self._run_analysis(task)
+            # run analyses for all properties in this batch in parallel, but limit concurrency with a semaphore
+            async with asyncio.TaskGroup() as tg:
+                futures = [tg.create_task(_guarded_analysis(t)) for t in tasks]
+
+            _LOGGER.info("All analyses for this batch completed, merging results ...")
+
+            results = [f.result() for f in futures]
+            batch_merged = self._merge_results(results)
+
+            # merge batch results into the running accumulator
+            accumulated = self._merge_results(list(accumulated.values()) + list(batch_merged.values()))
+
+            # now dump them in the file system
+            write_property_results(accumulated, self._mitre_graph, self._settings.output_dir)

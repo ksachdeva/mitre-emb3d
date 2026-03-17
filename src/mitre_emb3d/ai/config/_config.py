@@ -20,6 +20,8 @@ class Settings(BaseSettings):
 
     litellm_provider: dict[str, LiteLlmProviderConfig]
 
+    output_dir: Path
+
     _toml_file: ClassVar[Path]
 
     @classmethod
