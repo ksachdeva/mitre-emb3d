@@ -8,13 +8,7 @@ A CLI, TUI & MCP Server for https://emb3d.mitre.org/
 
 ```bash
 uvx mitre-emb3d --help
-```
-
-or
-
-```bash
-uvx --from mitre-emb3d med --help
-uvx --from mitre-emb3d med --pprint properties Networking --level 3
+uvx mitre-emb3d --pprint properties Networking --level 3
 ```
 
 ## Add to your project
@@ -54,7 +48,7 @@ uv add mitre-emb3d
 Example -
 
 ```bash
-$ uv run med --pprint list-threats-for-category "Networking"
+$ uvx mitre-emb3d --pprint list-threats-for-category "Networking"
 - TID-221: Authentication Bypass By Message Replay
 - TID-222: Critical System Service May Be Disabled
 - TID-310: Remotely Accessible Unauthenticated Services
