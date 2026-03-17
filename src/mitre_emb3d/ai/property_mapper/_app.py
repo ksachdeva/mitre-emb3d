@@ -13,7 +13,8 @@ from mitre_emb3d.ai.config import Settings
 from mitre_emb3d.ai.context.providers import NaiveContextProvider
 from mitre_emb3d.ai.repo import FsEntry, RepoUnderReview
 
-from ._agent import PropertyMapperAgent, PropertyMapperOutput
+from ._agent import PropertyMapperAgent
+from ._models import PropertyMapperOutput
 from ._prompt import PM_AGENT_ANALYSIS_PROMPT
 from ._writer import write_property_results
 

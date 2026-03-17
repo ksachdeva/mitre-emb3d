@@ -9,7 +9,7 @@ from ruamel.yaml.scalarstring import LiteralScalarString
 from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._models import PropertyId
 
-from ._agent import PropertyMapperOutput
+from ._models import PropertyMapperOutput
 
 _LOGGER = logging.getLogger(__name__)
 
