@@ -68,7 +68,9 @@ def map_properties(ctx: typer.Context) -> None:
     """Map the repository to the MITRE EMB3D Device Properties"""
     state = cast(CmdState, ctx.obj)
 
-    mapper = PropertyMapper(state.ai.settings)
+    repo_under_review = RepoUnderReview.from_repo(state.ai.repo, state.ai.settings.ignore)
+
+    mapper = PropertyMapper(repo_under_review, state.graph, state.ai.settings)
 
     async def _run() -> None:
         await mapper.run()

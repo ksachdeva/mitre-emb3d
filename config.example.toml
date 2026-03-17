@@ -20,8 +20,11 @@ litellm_provider = "prov-1"
 # The extra context is a list of file paths
 # (Markdown, text) that could enhance PropertyMapper agents
 # These would be appended after the system prompt of the agent
-extra_context = [
-]
+extra_context = []
+
+# contains the list of device properties to not even consider
+# e.g. ["PID-11", "PID-231" ..]
+excluded_properties = []
 
 # LiteLLM Providers
 # In the examples below prov-1, prov-2 are the names that

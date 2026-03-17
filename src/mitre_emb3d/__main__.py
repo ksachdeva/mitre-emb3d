@@ -85,7 +85,7 @@ def main(
     pprint: Annotated[bool, typer.Option(help="Whether to pretty-print the output (e.g. JSON lists)")] = False,
 ) -> None:
     logging.basicConfig(level=LOG_LEVELS.get(loglevel, logging.WARNING))
-    logging.getLogger("mitre_emb3d").setLevel(LOG_LEVELS.get(loglevel, logging.WARNING))
+    logging.getLogger("mitre_emb3d").setLevel(LOG_LEVELS.get(loglevel, logging.INFO))
 
     graph = make_mitre_graph(release)
 

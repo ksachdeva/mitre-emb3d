@@ -104,8 +104,16 @@ def _build_graph(bundle_doc: StixBundle) -> nx.DiGraph:
 
 
 class MITREGraph:
-    def __init__(self, bundle_doc: StixBundle):
+    def __init__(self, bundle_doc: StixBundle) -> None:
         self._graph = _build_graph(bundle_doc)
+
+    def get_categories(self) -> list[Emb3dCategory]:
+        return [
+            Emb3dCategory.HARDWARE,
+            Emb3dCategory.SYSTEM_SW,
+            Emb3dCategory.APP_SW,
+            Emb3dCategory.NETWORKING,
+        ]
 
     def get_mitigations(
         self,
