@@ -1,7 +1,7 @@
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TypedDict
 
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import LiteralScalarString
@@ -14,33 +14,49 @@ from ._models import PropertyMapperOutput
 _LOGGER = logging.getLogger(__name__)
 
 
+class EvidenceEntry(TypedDict):
+    file_name: str
+    code_snippet: str
+
+
+class PropertyArtifactDocument(TypedDict):
+    ai_model: str
+    head_commit: str
+    updated_at: datetime
+    property_id: str
+    property_name: str
+    category: str
+    is_applicable: bool
+    evidence: list[EvidenceEntry]
+
+
 def _build_document(
     result: PropertyMapperOutput,
     mitre_graph: MITREGraph,
     head_commit: str,
     ai_model: str,
-) -> dict[str, Any]:
+) -> PropertyArtifactDocument:
     prop = mitre_graph.get_property_from_id(result.property_id)
 
     evidence_entries = []
     for ev in result.evidence:
         evidence_entries.append(
-            {
-                "file_name": ev.file_name,
-                "code_snippet": LiteralScalarString(ev.code_snippet),
-            }
+            EvidenceEntry(
+                file_name=ev.file_name,
+                code_snippet=LiteralScalarString(ev.code_snippet),
+            )
         )
 
-    return {
-        "ai_model": ai_model,
-        "head_commit": head_commit,
-        "updated_at": datetime.now(UTC),
-        "property_id": result.property_id,
-        "property_name": prop.name,
-        "category": prop.category.value,
-        "is_applicable": result.is_relevant,
-        "evidence": evidence_entries,
-    }
+    return PropertyArtifactDocument(
+        ai_model=ai_model,
+        head_commit=head_commit,
+        updated_at=datetime.now(UTC),
+        property_id=result.property_id,
+        property_name=prop.name,
+        category=prop.category.value,
+        is_applicable=result.is_relevant,
+        evidence=evidence_entries,
+    )
 
 
 def write_property_results(
