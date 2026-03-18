@@ -9,7 +9,7 @@ from mitre_emb3d.ai._mitre_introduction import MITRE_INTRODUCTION
 from mitre_emb3d.ai.config._config import Settings
 
 from ._models import PropertyMapperOutput
-from ._prompt import PM_AGENT_SYSTEM_PROMPT
+from ._prompts import PM_AGENT_SYSTEM_PROMPT
 
 
 def _instruction_provider(
