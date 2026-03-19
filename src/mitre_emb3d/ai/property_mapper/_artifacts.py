@@ -59,7 +59,7 @@ def _build_document(
     )
 
 
-def write_property_results(
+def write_property_documents(
     results: dict[PropertyId, PropertyMapperOutput],
     mitre_graph: MITREGraph,
     output_dir: Path,
@@ -80,3 +80,21 @@ def write_property_results(
             yaml.dump(doc, f)
 
         _LOGGER.info(f"Wrote {out_path}")
+
+
+def read_property_documents(output_dir: Path) -> dict[PropertyId, PropertyArtifactDocument]:
+    properties_dir = output_dir / "properties"
+    if not properties_dir.exists():
+        _LOGGER.warning(f"Properties directory {properties_dir} does not exist.")
+        return {}
+
+    yaml = YAML()
+    documents: dict[PropertyId, PropertyArtifactDocument] = {}
+
+    for prop_file in properties_dir.glob("*.yaml"):
+        with prop_file.open() as f:
+            doc = yaml.load(f)
+            pid = doc["property_id"]
+            documents[pid] = doc
+
+    return documents

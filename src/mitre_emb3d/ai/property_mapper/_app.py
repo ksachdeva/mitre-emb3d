@@ -14,9 +14,9 @@ from mitre_emb3d.ai.context.providers import NaiveContextProvider
 from mitre_emb3d.ai.repo import FsEntry, RepoUnderReview
 
 from ._agent import PropertyMapperAgent
+from ._artifacts import write_property_documents
 from ._models import PropertyMapperOutput
 from ._prompts import PM_AGENT_ANALYSIS_PROMPT
-from ._writer import write_property_results
 
 _APP_NAME = "property_mapper_app"
 _USER_ID = "property_mapper_user"
@@ -188,7 +188,7 @@ class PropertyMapper:
             accumulated = self._merge_results(list(accumulated.values()) + list(batch_merged.values()))
 
             # now dump them in the file system
-            write_property_results(
+            write_property_documents(
                 accumulated,
                 self._mitre_graph,
                 self._settings.output_dir,

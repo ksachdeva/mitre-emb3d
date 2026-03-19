@@ -9,7 +9,7 @@ from pydantic_settings import (
     TomlConfigSettingsSource,
 )
 
-from ._agent import LiteLlmProviderConfig, ProperyMapperAgentConfig
+from ._agent import LiteLlmProviderConfig, ProperyMapperAgentConfig, ThreatAnalyzerAgentConfig
 
 
 class Settings(BaseSettings):
@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     ignore: list[str] = []
 
     property_mapper_agent: ProperyMapperAgentConfig
+    threat_analyzer_agent: ThreatAnalyzerAgentConfig
 
     litellm_provider: dict[str, LiteLlmProviderConfig]
 

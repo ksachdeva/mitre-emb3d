@@ -4,7 +4,7 @@ from typing import Any
 from google.genai import types as genai_types
 from pydantic import BaseModel, Field
 
-from mitre_emb3d._models import Emb3dCategory, PropertyId
+from mitre_emb3d._models import Emb3dCategory, PropertyId, ThreatId
 
 
 class LiteLlmProviderConfig(BaseModel):
@@ -38,4 +38,21 @@ class ProperyMapperAgentConfig(AgentConfig):
     excluded_properties: list[PropertyId] = Field(
         default_factory=list,
         description="Properties to exclude from consideration by the agent",
+    )
+
+
+class ThreatAnalyzerAgentConfig(AgentConfig):
+    max_token_per_analysis: int = Field(
+        default=8000,
+        description="Maximum number of tokens to use for each analysis run",
+    )
+
+    extra_context: list[Path] = Field(
+        default_factory=list,
+        description="Additional context to provide to the agent",
+    )
+
+    excluded_threats: list[ThreatId] = Field(
+        default_factory=list,
+        description="Threats to exclude from consideration by the agent",
     )

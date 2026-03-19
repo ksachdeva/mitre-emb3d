@@ -32,6 +32,18 @@ excluded_properties = []
 # you could exclude the entire category
 excluded_categories = []
 
+[threat_analyzer_agent]
+litellm_provider = "prov-1"
+# The extra context is a list of file paths
+# (Markdown, text) that could enhance Threat Analyzer agent
+# These would be appended after the system prompt of the agent
+extra_context = []
+
+# contains the list of threats to not even consider
+# e.g. ["TID-110", "TID-222" ..]
+excluded_threats = []
+
+
 # LiteLLM Providers
 # In the examples below prov-1, prov-2 are the names that
 # need to be used as the values for "litellm_provider" for various agent configurations

@@ -17,6 +17,7 @@ from ._models import (
     Threat,
     ThreatId,
     ThreatInfo,
+    ThreatWithMitigations,
 )
 
 
@@ -218,6 +219,12 @@ class MITREGraph:
                 return Threat(**d)
 
         raise ValueError(f"Threat with id '{threat_id}' not found in graph.")
+
+    def get_threat_with_mitigations(self, threat_id: ThreatId) -> ThreatWithMitigations:
+        threat = self.get_threat_from_id(threat_id)
+        mitigations = self.get_mitigations(threat_id)
+
+        return ThreatWithMitigations(**threat.model_dump(), mitigations=mitigations)
 
     def get_property_from_id(self, property_id: PropertyId) -> Emb3dProperty:
         for _, d in self._graph.nodes(data=True):

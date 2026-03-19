@@ -13,6 +13,7 @@ from mitre_emb3d._types import CmdState
 from .config import Settings
 from .property_mapper import PropertyMapper
 from .repo import RepoTreeGenerator, RepoUnderReview
+from .threat_analyzer import ThreatAnalyzer
 
 ai_app = Typer(name="ai", help="AI related commands")
 
@@ -74,5 +75,20 @@ def map_properties(ctx: typer.Context) -> None:
 
     async def _run() -> None:
         await mapper.run()
+
+    asyncio.run(_run())
+
+
+@ai_app.command()
+def threat_analysis(ctx: typer.Context) -> None:
+    """Run threat analysis on the repository"""
+    state = cast(CmdState, ctx.obj)
+
+    repo_under_review = RepoUnderReview.from_repo(state.ai.repo, state.ai.settings.ignore)
+
+    analyzer = ThreatAnalyzer(repo_under_review, state.graph, state.ai.settings)
+
+    async def _run() -> None:
+        await analyzer.run()
 
     asyncio.run(_run())
