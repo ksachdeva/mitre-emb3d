@@ -1,6 +1,6 @@
 [project]
 name = "mitre-emb3d"
-version = "0.4.0"
+version = "0.5.0"
 description = "MITRE EMB3D: Library & CLI for working with the MITRE EMB3D framework."
 readme = "README.md"
 authors = [
