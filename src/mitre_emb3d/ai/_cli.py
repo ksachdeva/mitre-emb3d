@@ -100,5 +100,5 @@ def gen_site(ctx: typer.Context) -> None:
     """Generate a static HTML report site from the YAML artifacts"""
     state = cast(CmdState, ctx.obj)
 
-    site_dir = generate_site(state.ai.settings.output_dir)
+    site_dir = generate_site(state.ai.settings.output_dir, state.graph)
     rprint(f"Site generated at: {site_dir}")

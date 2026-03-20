@@ -11,6 +11,9 @@ from pygments.lexers import get_lexer_for_filename, guess_lexer
 from pygments.util import ClassNotFound
 from ruamel.yaml import YAML
 
+from mitre_emb3d._graph import MITREGraph
+from mitre_emb3d._models import Emb3dCategory
+
 _LOGGER = logging.getLogger(__name__)
 
 _TEMPLATES_PACKAGE = "mitre_emb3d.ai.site_generator"
@@ -108,7 +111,87 @@ def _find_related_threats(property_id: str, threats: list[dict[str, Any]]) -> li
     return related
 
 
-def generate_site(output_dir: Path) -> Path:
+_HEATMAP_CATEGORIES = [
+    (Emb3dCategory.NETWORKING, "Networking"),
+    (Emb3dCategory.HARDWARE, "Hardware"),
+    (Emb3dCategory.SYSTEM_SW, "System Software"),
+    (Emb3dCategory.APP_SW, "Application Software"),
+]
+
+_RESOLUTION_COLORS = {
+    "mitigated": "#44aa44",
+    "vulnerable": "#cc4444",
+    "conditionally_mitigated": "#cc8844",
+    "na": "#4488cc",
+    "not_investigated": "#888888",
+}
+
+_RESOLUTION_LABELS = {
+    "mitigated": "M",
+    "vulnerable": "V",
+    "conditionally_mitigated": "CM",
+    "na": "NA",
+    "not_investigated": "NI",
+}
+
+_LEGEND = [
+    {"key": "not_investigated", "label": "Not Investigated", "color": "#888888", "short": "NI"},
+    {"key": "na", "label": "N/A", "color": "#4488cc", "short": "NA"},
+    {"key": "mitigated", "label": "Mitigated", "color": "#44aa44", "short": "M"},
+    {"key": "vulnerable", "label": "Vulnerable", "color": "#cc4444", "short": "V"},
+    {"key": "conditionally_mitigated", "label": "Conditionally Mitigated", "color": "#cc8844", "short": "CM"},
+]
+
+
+def _derive_resolution(threat_doc: dict[str, Any] | None) -> str:
+    """Derive a resolution key from a threat artifact document."""
+    if threat_doc is None:
+        return "not_investigated"
+
+    all_mitigations: list[bool] = []
+    for prop_entry in threat_doc.get("properties", {}).values():
+        for m in prop_entry.get("mitigation_info", []):
+            all_mitigations.append(m.get("is_applied", False))
+
+    if not all_mitigations:
+        return "na"
+
+    applied = sum(all_mitigations)
+    if applied == len(all_mitigations):
+        return "mitigated"
+    if applied == 0:
+        return "vulnerable"
+    return "conditionally_mitigated"
+
+
+def _build_heatmap_data(
+    mitre_graph: MITREGraph,
+    threats_by_id: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Build the heatmap data structure for the template."""
+    columns = []
+    for category, label in _HEATMAP_CATEGORIES:
+        threat_infos = mitre_graph.get_threats_for_category(category)
+        cells = []
+        for ti in threat_infos:
+            doc = threats_by_id.get(ti.id)
+            resolution = _derive_resolution(doc)
+            cells.append(
+                {
+                    "threat_id": ti.id,
+                    "threat_name": ti.name,
+                    "resolution": resolution,
+                    "color": _RESOLUTION_COLORS[resolution],
+                    "short": _RESOLUTION_LABELS[resolution],
+                    "has_page": doc is not None,
+                }
+            )
+        columns.append({"name": label, "threats": cells})
+
+    return {"columns": columns, "legend": _LEGEND}
+
+
+def generate_site(output_dir: Path, mitre_graph: MITREGraph) -> Path:
     """Generate a static HTML site from the YAML artifacts in output_dir.
 
     Reads from:
@@ -143,6 +226,10 @@ def generate_site(output_dir: Path) -> Path:
     threat_summaries = [_threat_summary(t) for t in threats]
     properties_by_category = _group_properties_by_category(properties)
 
+    # Build heatmap data
+    threats_by_id = {t["threat_id"]: t for t in threats}
+    heatmap_data = _build_heatmap_data(mitre_graph, threats_by_id)
+
     # --- Render index ---
     index_tmpl = env.get_template("index.html")
     index_html = index_tmpl.render(
@@ -154,6 +241,15 @@ def generate_site(output_dir: Path) -> Path:
     )
     (site_dir / "index.html").write_text(index_html)
     _LOGGER.info("Wrote index.html")
+
+    # --- Render heatmap ---
+    heatmap_tmpl = env.get_template("heatmap.html")
+    heatmap_html = heatmap_tmpl.render(
+        root_path="",
+        heatmap=heatmap_data,
+    )
+    (site_dir / "heatmap.html").write_text(heatmap_html)
+    _LOGGER.info("Wrote heatmap.html")
 
     # --- Render property pages ---
     prop_dir = site_dir / "properties"

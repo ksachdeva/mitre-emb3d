@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}EMB3D Report — Threat Heatmap{% endblock %}
+
+{% block content %}
+<h1>Threat Heatmap</h1>
+
+<div class="heatmap-legend">
+  {% for item in heatmap.legend %}
+  <span class="legend-item">
+    <span class="legend-swatch" style="background: {{ item.color }};"></span>
+    {{ item.label }} ({{ item.short }})
+  </span>
+  {% endfor %}
+</div>
+
+<div class="heatmap-grid">
+  {% for col in heatmap.columns %}
+  <div class="heatmap-column">
+    <div class="heatmap-column-header">{{ col.name }}</div>
+    <div class="heatmap-cells">
+      {% for cell in col.threats %}
+      {% if cell.has_page %}
+      <a href="threats/{{ cell.threat_id }}.html"
+         class="heatmap-cell"
+         style="background: {{ cell.color }};"
+         title="{{ cell.threat_id }} — {{ cell.threat_name }}">
+        <span class="heatmap-tid">{{ cell.threat_id }}</span>
+      </a>
+      {% else %}
+      <span class="heatmap-cell"
+            style="background: {{ cell.color }};"
+            title="{{ cell.threat_id }} — {{ cell.threat_name }}">
+        <span class="heatmap-tid">{{ cell.threat_id }}</span>
+      </span>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
