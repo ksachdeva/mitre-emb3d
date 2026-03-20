@@ -1,5 +1,10 @@
 # MITRE EMB3D
 
+[![Documentation build status](https://readthedocs.org/projects/mitre-emb3d/badge/?version=latest
+)](https://lmitre-emb3d.readthedocs.io/en/latest/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+
+
 A CLI, TUI, MCP Server & AI based Threat Analysis for https://emb3d.mitre.org/
 
 ## Run
