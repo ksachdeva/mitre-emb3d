@@ -58,7 +58,6 @@ def _compute_property_stats(properties: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _compute_threat_stats(threats: list[dict[str, Any]]) -> dict[str, Any]:
-    categories: set[str] = set()
     mitigations_total = 0
     mitigations_applied = 0
 
@@ -71,7 +70,6 @@ def _compute_threat_stats(threats: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "total": len(threats),
-        "categories": list(categories),
         "mitigations_total": mitigations_total,
         "mitigations_applied": mitigations_applied,
     }
