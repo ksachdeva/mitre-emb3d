@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ doc.property_id }} — {{ doc.property_name }}{% endblock %}
+
+{% block content %}
+<hgroup>
+  <h1>{{ doc.property_id }} — {{ doc.property_name }}</h1>
+  <p>Category: <strong>{{ doc.category }}</strong></p>
+</hgroup>
+
+<table>
+  <tbody>
+    <tr><th>Applicable</th><td>{% if doc.is_applicable %}<mark>Yes</mark>{% else %}No{% endif %}</td></tr>
+    <tr><th>AI Model</th><td>{{ doc.ai_model }}</td></tr>
+    <tr><th>Commit</th><td><code>{{ doc.head_commit }}</code></td></tr>
+    <tr><th>Updated</th><td>{{ doc.updated_at }}</td></tr>
+  </tbody>
+</table>
+
+{% if doc.is_applicable and related_threats %}
+<h2>Related Threats</h2>
+<ul>
+  {% for t in related_threats %}
+  <li><a href="../threats/{{ t.threat_id }}.html">{{ t.threat_id }}</a> — {{ t.threat_name }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h2>Evidence</h2>
+{% if doc.evidence %}
+  {% for ev in doc.evidence %}
+  <article>
+    <header><code>{{ ev.file_name }}</code></header>
+    {{ ev.highlighted_code | safe }}
+  </article>
+  {% endfor %}
+{% else %}
+  <p>No evidence found.</p>
+{% endif %}
+{% endblock %}

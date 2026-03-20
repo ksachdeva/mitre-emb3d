@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}EMB3D Report — Dashboard{% endblock %}
+
+{% block content %}
+<h1>MITRE EMB3D Analysis Report</h1>
+
+<section id="summary">
+  <h2>Summary</h2>
+  <div class="grid">
+    <article>
+      <header>Device Properties</header>
+      <p><strong>{{ property_stats.applicable }}</strong> applicable out of <strong>{{ property_stats.total }}</strong> analyzed</p>
+    </article>
+    <article>
+      <header>Threats</header>
+      <p><strong>{{ threat_stats.total }}</strong> threats analyzed across <strong>{{ threat_stats.categories | length }}</strong> categories</p>
+    </article>
+    <article>
+      <header>Mitigations</header>
+      <p><strong>{{ threat_stats.mitigations_applied }}</strong> applied / <strong>{{ threat_stats.mitigations_total }}</strong> total</p>
+    </article>
+  </div>
+</section>
+
+<section id="properties">
+  <h2>Device Properties</h2>
+  {% for category, props in properties_by_category.items() %}
+  <details open>
+    <summary><strong>{{ category }}</strong> ({{ props | length }} properties)</summary>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Applicable</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for prop in props %}
+        <tr>
+          <td><a href="properties/{{ prop.property_id }}.html">{{ prop.property_id }}</a></td>
+          <td>{{ prop.property_name }}</td>
+          <td>
+            {% if prop.is_applicable %}
+              <mark>Yes</mark>
+            {% else %}
+              No
+            {% endif %}
+          </td>
+          <td>{{ prop.evidence | length }} file{{ "s" if prop.evidence | length != 1 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </details>
+  {% endfor %}
+</section>
+
+<section id="threats">
+  <h2>Threats</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Properties</th>
+        <th>Mitigations Applied</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for threat in threats %}
+      <tr>
+        <td><a href="threats/{{ threat.threat_id }}.html">{{ threat.threat_id }}</a></td>
+        <td>{{ threat.threat_name }}</td>
+        <td>{{ threat.properties | length }}</td>
+        <td>{{ threat.mitigations_applied }} / {{ threat.mitigations_total }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

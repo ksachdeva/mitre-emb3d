@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ doc.threat_id }} — {{ doc.threat_name }}{% endblock %}
+
+{% block content %}
+<hgroup>
+  <h1>{{ doc.threat_id }} — {{ doc.threat_name }}</h1>
+</hgroup>
+
+<table>
+  <tbody>
+    <tr><th>AI Model</th><td>{{ doc.ai_model }}</td></tr>
+    <tr><th>Commit</th><td><code>{{ doc.head_commit }}</code></td></tr>
+    <tr><th>Updated</th><td>{{ doc.updated_at }}</td></tr>
+  </tbody>
+</table>
+
+<h2>Properties &amp; Mitigations</h2>
+
+{% for pid, prop_entry in doc.properties.items() %}
+<details open>
+  <summary>
+    <strong><a href="../properties/{{ prop_entry.property_id }}.html">{{ prop_entry.property_id }}</a> — {{ prop_entry.property_name }}</strong>
+  </summary>
+
+  {% if prop_entry.mitigation_info %}
+  <table>
+    <thead>
+      <tr>
+        <th>Mitigation</th>
+        <th>File</th>
+        <th>Applied</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in prop_entry.mitigation_info %}
+      <tr>
+        <td><strong>{{ m.mitigation_id }}</strong></td>
+        <td><code>{{ m.file_name }}</code></td>
+        <td>
+          {% if m.is_applied %}
+            <mark>Yes</mark>
+          {% else %}
+            <span class="not-applied">No</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr class="explanation-row">
+        <td colspan="3">
+          <div class="explanation">{{ m.explanation }}</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No mitigation analysis available for this property.</p>
+  {% endif %}
+</details>
+{% endfor %}
+
+{% if not doc.properties %}
+<p>No property analysis available for this threat.</p>
+{% endif %}
+{% endblock %}

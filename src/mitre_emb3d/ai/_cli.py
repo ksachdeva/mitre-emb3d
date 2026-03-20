@@ -13,6 +13,7 @@ from mitre_emb3d._types import CmdState
 from .config import Settings
 from .property_mapper import PropertyMapper
 from .repo import RepoTreeGenerator, RepoUnderReview
+from .site_generator import generate_site
 from .threat_analyzer import ThreatAnalyzer
 
 ai_app = Typer(name="ai", help="AI related commands")
@@ -92,3 +93,12 @@ def threat_analysis(ctx: typer.Context) -> None:
         await analyzer.run()
 
     asyncio.run(_run())
+
+
+@ai_app.command()
+def gen_site(ctx: typer.Context) -> None:
+    """Generate a static HTML report site from the YAML artifacts"""
+    state = cast(CmdState, ctx.obj)
+
+    site_dir = generate_site(state.ai.settings.output_dir)
+    rprint(f"Site generated at: {site_dir}")
