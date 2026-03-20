@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -7,7 +8,7 @@ from google.genai import types as genai_types
 from rich import print as rprint
 
 from mitre_emb3d._graph import MITREGraph
-from mitre_emb3d._models import PropertyId, ThreatInfo, ThreatWithMitigations
+from mitre_emb3d._models import PropertyId, ThreatId, ThreatInfo, ThreatWithMitigations
 from mitre_emb3d.ai.config import Settings
 from mitre_emb3d.ai.context.providers import NaiveContextProvider
 from mitre_emb3d.ai.property_mapper import read_property_documents
@@ -15,6 +16,7 @@ from mitre_emb3d.ai.property_mapper._artifacts import PropertyArtifactDocument
 from mitre_emb3d.ai.repo import FsEntry, RepoUnderReview
 
 from ._agent import ThreatAnalyzerAgent
+from ._artifacts import write_threat_documents
 from ._models import ThreatAnalyzerOutput
 from ._prompts import TA_AGENT_ANALYSIS_PROMPT
 
@@ -134,19 +136,50 @@ class ThreatAnalyzer:
 
         return prop_to_files
 
+    def _merge_results(
+        self,
+        existing: dict[PropertyId, ThreatAnalyzerOutput],
+        new_results: list[ThreatAnalyzerOutput],
+    ) -> dict[PropertyId, ThreatAnalyzerOutput]:
+        merged = dict(existing)
+        for result in new_results:
+            pid = result.property_id
+            prev = merged.get(pid)
+            if prev is None:
+                merged[pid] = result
+                continue
+
+            # merge mitigation_info: deduplicate by (mitigation_id, file_name)
+            seen = {(m.mitigation_id, m.file_name) for m in prev.mitigation_info}
+            for m in result.mitigation_info:
+                if (m.mitigation_id, m.file_name) not in seen:
+                    prev.mitigation_info.append(m)
+                    seen.add((m.mitigation_id, m.file_name))
+
+        return merged
+
     async def run(self) -> None:
         prop_documents = read_property_documents(self._settings.output_dir)
         file_sets = self._filesets_by_device_properties(prop_documents)
 
         threats = _flatten_threats(self._mitre_graph)
 
+        accumulated: dict[ThreatId, dict[PropertyId, ThreatAnalyzerOutput]] = {}
+
+        sem = asyncio.Semaphore(4)
+
+        async def _guarded_analysis(task: _AnalysisTask) -> ThreatAnalyzerOutput:
+            async with sem:
+                return await self._run_analysis(task)
+
         for threat in threats:
             _LOGGER.info(f"Analyzing threat {threat.id} - {threat.name} ...")
 
-            # get the properties related to this threat
             related_properties = self._mitre_graph.get_properties_for_threat(threat.id)
-
             threat_with_mitigations = self._mitre_graph.get_threat_with_mitigations(threat.id)
+
+            # collect all tasks across properties and batches for this threat
+            all_tasks: list[_AnalysisTask] = []
 
             for prop in related_properties:
                 _LOGGER.info(f"Processing property {prop.id} related to threat {threat.id} ...")
@@ -162,13 +195,36 @@ class ThreatAnalyzer:
 
                 for batch in context_batches:
                     combined_content = _combine_batch(batch)
-
-                    task = _AnalysisTask(
-                        threat=threat_with_mitigations,
-                        property_id=prop.id,
-                        property_name=prop.name,
-                        combined_content=combined_content,
+                    all_tasks.append(
+                        _AnalysisTask(
+                            threat=threat_with_mitigations,
+                            property_id=prop.id,
+                            property_name=prop.name,
+                            combined_content=combined_content,
+                        )
                     )
 
-                    analysis_result = await self._run_analysis(task)
-                    _LOGGER.info(f"Analysis result for threat {threat.id} - {threat.name}: {analysis_result}")
+            if not all_tasks:
+                _LOGGER.info(f"No analysis tasks for threat {threat.id}, skipping.")
+                continue
+
+            # run all tasks for this threat concurrently (bounded by semaphore)
+            async with asyncio.TaskGroup() as tg:
+                futures = [tg.create_task(_guarded_analysis(t)) for t in all_tasks]
+
+            _LOGGER.info(f"All analyses for threat {threat.id} completed, merging results ...")
+
+            results = [f.result() for f in futures]
+
+            # merge results into per-property accumulator for this threat
+            threat_acc = accumulated.get(threat.id, {})
+            accumulated[threat.id] = self._merge_results(threat_acc, results)
+
+            # flush after each threat
+            write_threat_documents(
+                accumulated,
+                self._mitre_graph,
+                self._settings.output_dir,
+                self._rur.head_commit,
+                self._agent.lite_llm.model,
+            )
