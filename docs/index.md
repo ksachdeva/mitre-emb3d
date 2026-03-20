@@ -15,7 +15,7 @@ MITRE EMB3D is a threat model framework that provides a structured approach to i
 
 ## What does this tool do?
 
-`mitre-emb3d` (or `med`) gives you programmatic access to the EMB3D knowledge base and adds AI-powered analysis on top:
+`uvx mitre-emb3d` gives you programmatic access to the EMB3D knowledge base and adds AI-powered analysis on top:
 
 - **Query** device properties, threats, and mitigations from the EMB3D framework
 - **Map** your repository's codebase to relevant EMB3D device properties using AI agents

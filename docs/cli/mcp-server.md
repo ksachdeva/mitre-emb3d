@@ -3,7 +3,7 @@
 Launch a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that exposes all MITRE EMB3D functionality as tools for AI assistants.
 
 ```bash
-med mcp
+uvx mitre-emb3d mcp
 ```
 
 ## Exposed tools
@@ -33,8 +33,8 @@ Add the MCP server to your AI assistant configuration. For example, in a VS Code
 {
   "servers": {
     "mitre-emb3d": {
-      "command": "med",
-      "args": ["mcp"]
+      "command": "uvx",
+      "args": ["mitre-emb3d", "mcp"]
     }
   }
 }

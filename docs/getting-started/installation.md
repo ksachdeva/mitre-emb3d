@@ -31,21 +31,21 @@ pip install mitre-emb3d
 ## Verify installation
 
 ```bash
-med --version
+uvx mitre-emb3d --version
 ```
 
-The CLI is available under two command names — `mitre-emb3d` and the shorter alias `med`. Both are identical.
+The CLI is available under two command names — `mitre-emb3d` and the shorter alias `med`. Both are identical. These docs consistently use `uvx mitre-emb3d`.
 
 ## Shell completion
 
 Install tab-completion for your shell:
 
 ```bash
-med --install-completion
+uvx mitre-emb3d --install-completion
 ```
 
 Or preview the completion script without installing:
 
 ```bash
-med --show-completion
+uvx mitre-emb3d --show-completion
 ```

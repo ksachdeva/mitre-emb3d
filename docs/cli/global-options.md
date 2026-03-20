@@ -3,7 +3,7 @@
 These options are available on every command and must be placed **before** the subcommand name.
 
 ```
-med [OPTIONS] COMMAND [ARGS]...
+uvx mitre-emb3d [OPTIONS] COMMAND [ARGS]...
 ```
 
 ## Options
@@ -13,7 +13,7 @@ med [OPTIONS] COMMAND [ARGS]...
 Show the version and exit.
 
 ```bash
-med --version
+uvx mitre-emb3d --version
 ```
 
 ### `--release TEXT`
@@ -21,7 +21,7 @@ med --version
 MITRE EMB3D release version to use. Defaults to `2.0.1`.
 
 ```bash
-med --release 2.0.1 list-categories
+uvx mitre-emb3d --release 2.0.1 list-categories
 ```
 
 ### `--heatmap-storage [json]`
@@ -35,7 +35,7 @@ Set the logging level. One of: `debug`, `info`, `warning`, `error`, `critical`.
 Defaults to `warning`.
 
 ```bash
-med -l debug list-categories
+uvx mitre-emb3d -l debug list-categories
 ```
 
 ### `--pprint` / `--no-pprint`
@@ -43,7 +43,7 @@ med -l debug list-categories
 Toggle pretty-printed output. Default is `--no-pprint` which outputs raw JSON.
 
 ```bash
-med --pprint list-threats-for-category "Networking"
+uvx mitre-emb3d --pprint list-threats-for-category "Networking"
 ```
 
 ### `--install-completion`

@@ -1,9 +1,9 @@
 # CLI Reference
 
-The `mitre-emb3d` CLI (aliased as `med`) provides access to the full MITRE EMB3D framework from the command line.
+The `mitre-emb3d` CLI provides access to the full MITRE EMB3D framework from the command line.
 
 ```
-med [OPTIONS] COMMAND [ARGS]...
+uvx mitre-emb3d [OPTIONS] COMMAND [ARGS]...
 ```
 
 ## Command groups
@@ -22,7 +22,7 @@ By default, all commands output **JSON** — designed for piping into other tool
 Add `--pprint` for human-readable formatted output:
 
 ```bash
-med --pprint list-categories
+uvx mitre-emb3d --pprint list-categories
 ```
 
 See [Global Options](global-options.md) for all top-level flags.

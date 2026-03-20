@@ -7,7 +7,7 @@ These commands query the MITRE EMB3D knowledge base — categories, device prope
 List the four EMB3D device categories.
 
 ```bash
-med --pprint list-categories
+uvx mitre-emb3d --pprint list-categories
 ```
 
 **Output** — Hardware, System Software, Application Software, Networking.
@@ -19,7 +19,7 @@ med --pprint list-categories
 List device properties for a category.
 
 ```bash
-med list-properties-for-category CATEGORY [--level N]
+uvx mitre-emb3d list-properties-for-category CATEGORY [--level N]
 ```
 
 | Argument / Option | Description |
@@ -30,8 +30,8 @@ med list-properties-for-category CATEGORY [--level N]
 **Examples:**
 
 ```bash
-med --pprint list-properties-for-category "Networking"
-med --pprint list-properties-for-category "Networking" --level 3
+uvx mitre-emb3d --pprint list-properties-for-category "Networking"
+uvx mitre-emb3d --pprint list-properties-for-category "Networking" --level 3
 ```
 
 ---
@@ -41,7 +41,7 @@ med --pprint list-properties-for-category "Networking" --level 3
 List device properties associated with a threat.
 
 ```bash
-med list-properties-for-threat THREAT_ID
+uvx mitre-emb3d list-properties-for-threat THREAT_ID
 ```
 
 | Argument | Description |
@@ -51,7 +51,7 @@ med list-properties-for-threat THREAT_ID
 **Example:**
 
 ```bash
-med --pprint list-properties-for-threat TID-221
+uvx mitre-emb3d --pprint list-properties-for-threat TID-221
 ```
 
 ---
@@ -61,7 +61,7 @@ med --pprint list-properties-for-threat TID-221
 List all threats in a category.
 
 ```bash
-med list-threats-for-category CATEGORY
+uvx mitre-emb3d list-threats-for-category CATEGORY
 ```
 
 | Argument | Description |
@@ -71,7 +71,7 @@ med list-threats-for-category CATEGORY
 **Example:**
 
 ```bash
-med --pprint list-threats-for-category "Networking"
+uvx mitre-emb3d --pprint list-threats-for-category "Networking"
 ```
 
 ---
@@ -81,7 +81,7 @@ med --pprint list-threats-for-category "Networking"
 List threats for a device property.
 
 ```bash
-med list-threats-for-property PROPERTY_ID
+uvx mitre-emb3d list-threats-for-property PROPERTY_ID
 ```
 
 | Argument | Description |
@@ -91,7 +91,7 @@ med list-threats-for-property PROPERTY_ID
 **Example:**
 
 ```bash
-med --pprint list-threats-for-property PID-41
+uvx mitre-emb3d --pprint list-threats-for-property PID-41
 ```
 
 ---
@@ -101,7 +101,7 @@ med --pprint list-threats-for-property PID-41
 List mitigations for a threat.
 
 ```bash
-med list-mitigations THREAT_ID
+uvx mitre-emb3d list-mitigations THREAT_ID
 ```
 
 | Argument | Description |
@@ -111,7 +111,7 @@ med list-mitigations THREAT_ID
 **Example:**
 
 ```bash
-med --pprint list-mitigations TID-221
+uvx mitre-emb3d --pprint list-mitigations TID-221
 ```
 
 ---
@@ -121,7 +121,7 @@ med --pprint list-mitigations TID-221
 Get detailed information about a threat, including its mitigations.
 
 ```bash
-med threat THREAT_ID
+uvx mitre-emb3d threat THREAT_ID
 ```
 
 | Argument | Description |
@@ -131,7 +131,7 @@ med threat THREAT_ID
 **Example:**
 
 ```bash
-med --pprint threat TID-221
+uvx mitre-emb3d --pprint threat TID-221
 ```
 
 ---
@@ -141,7 +141,7 @@ med --pprint threat TID-221
 Get detailed information about a mitigation, including associated threats.
 
 ```bash
-med mitigation MITIGATION_ID
+uvx mitre-emb3d mitigation MITIGATION_ID
 ```
 
 | Argument | Description |
@@ -151,5 +151,5 @@ med mitigation MITIGATION_ID
 **Example:**
 
 ```bash
-med --pprint mitigation MID-001
+uvx mitre-emb3d --pprint mitigation MID-001
 ```

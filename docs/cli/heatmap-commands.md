@@ -3,7 +3,7 @@
 Heatmap commands let you initialize and manage threat assessment tracking for a project. All heatmap commands live under the `heatmap` subcommand.
 
 ```bash
-med heatmap COMMAND [ARGS]...
+uvx mitre-emb3d heatmap COMMAND [ARGS]...
 ```
 
 Heatmap data is stored as JSON in `~/.local/share/mitre-emb3d/` by default. Override the storage directory with the environment variable:
@@ -19,7 +19,7 @@ export MITRE_EMB3D_HEATMAP_JSON_STORAGE_DIR=/path/to/dir
 Initialize a heatmap for a project. All threats start with the status `NOT_INVESTIGATED`.
 
 ```bash
-med heatmap init PROJECT_NAME DESCRIPTION
+uvx mitre-emb3d heatmap init PROJECT_NAME DESCRIPTION
 ```
 
 | Argument | Description |
@@ -30,7 +30,7 @@ med heatmap init PROJECT_NAME DESCRIPTION
 **Example:**
 
 ```bash
-med heatmap init my-device "IoT gateway firmware"
+uvx mitre-emb3d heatmap init my-device "IoT gateway firmware"
 ```
 
 ---
@@ -40,7 +40,7 @@ med heatmap init my-device "IoT gateway firmware"
 Read threat assessment entries for a category.
 
 ```bash
-med heatmap read PROJECT_NAME CATEGORY
+uvx mitre-emb3d heatmap read PROJECT_NAME CATEGORY
 ```
 
 | Argument | Description |
@@ -51,7 +51,7 @@ med heatmap read PROJECT_NAME CATEGORY
 **Example:**
 
 ```bash
-med --pprint heatmap read my-device "Networking"
+uvx mitre-emb3d --pprint heatmap read my-device "Networking"
 ```
 
 ---
@@ -61,7 +61,7 @@ med --pprint heatmap read my-device "Networking"
 Update the assessment status of a threat.
 
 ```bash
-med heatmap update-threat-status PROJECT_NAME CATEGORY THREAT_ID [--tr STATUS]
+uvx mitre-emb3d heatmap update-threat-status PROJECT_NAME CATEGORY THREAT_ID [--tr STATUS]
 ```
 
 | Argument / Option | Description |
@@ -78,7 +78,7 @@ med heatmap update-threat-status PROJECT_NAME CATEGORY THREAT_ID [--tr STATUS]
 Update the status of a mitigation within a threat.
 
 ```bash
-med heatmap update-mitigation-status PROJECT_NAME CATEGORY THREAT_ID MITIGATION_ID [--mr STATUS]
+uvx mitre-emb3d heatmap update-mitigation-status PROJECT_NAME CATEGORY THREAT_ID MITIGATION_ID [--mr STATUS]
 ```
 
 | Argument / Option | Description |
