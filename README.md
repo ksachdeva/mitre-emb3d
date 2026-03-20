@@ -1,6 +1,6 @@
 # MITRE EMB3D
 
-A CLI, TUI & MCP Server for https://emb3d.mitre.org/
+A CLI, TUI, MCP Server & AI based Threat Analysis for https://emb3d.mitre.org/
 
 ## Run
 
@@ -19,16 +19,27 @@ The project can be used both as a tool & library
 uv add mitre-emb3d
 ```
 
-## Features
 
-### 4 MITRE EMB3D Categories -
+## What this project enables!!
 
-- Hardware
-- System Software
-- Application Software
-- Networking
+### AI Driven Embedded Project Threat Analysis
 
-### What you can do (via library, CLI and MCP Server)
+* Determine which device properties are applicable to your project
+* Do threat analysis
+* Generate a detailed project report and heatmap
+
+```bash
+uvx mitre-emb3d ai --repo <path-to-repo> --config config.toml map-properties
+uvx mitre-emb3d ai --repo <path-to-repo> --config config.toml threat-analysis
+uvx mitre-emb3d ai --repo <path-to-repo> --config config.toml gen-site
+```
+
+See the documentation & guides for more information on configuration
+https://mitre-emb3d.readthedocs.io/en/latest/guides/
+
+### CLI, MCP Server & TUI
+
+You can use the CLI or MCP server or both to build your own solutions
 
 * List device properties for a given category
 * List threats for a given category
@@ -40,10 +51,6 @@ uv add mitre-emb3d
 * A CLI - AI Agent first (returns JSON output) / For humans add `--pprint` to see beautiful ouput
 * A TUI - Heatmap creation, reading & update (See TUI section below for screenshots)
 * An MCP Server
-*
-* ... more coming
-
-## CLI Interface
 
 Example -
 
@@ -73,30 +80,35 @@ $ uvx mitre-emb3d --pprint list-threats-for-category "Networking"
 
 ```markdown
 
+
  Usage: med [OPTIONS] COMMAND [ARGS]...
 
-╭─ Options ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --version                                        Show the version of CLI and exit                                                                          │
-│ --release                                TEXT    2.0.1, 2.0 ... [default: 2.0.1]                                                                           │
-│ --heatmap-storage                        [json]  Storage type for heatmaps (e.g. json) [default: json]                                                     │
-│ --loglevel            -l                 TEXT    Set the logging level (debug, info, warning, error, critical) [default: warning]                          │
-│ --pprint                  --no-pprint            Whether to pretty-print the output (e.g. JSON lists) [default: no-pprint]                                 │
-│ --install-completion                             Install completion for the current shell.                                                                 │
-│ --show-completion                                Show completion for the current shell, to copy it or customize the installation.                          │
-│ --help                                           Show this message and exit.                                                                               │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ list-categories               List the categories                                                                                                          │
-│ list-properties-for-category  List properties for a certain category                                                                                       │
-│ list-properties-for-threat    List properties for a certain threat                                                                                         │
-│ list-threats-for-category     List threats for a certain category                                                                                          │
-│ list-threats-for-property     List threats for a certain device property                                                                                   │
-│ list-mitigations              List mitigations for a certain threat                                                                                        │
-│ threat                        Threat Information                                                                                                           │
-│ mitigation                    Mitigation Information                                                                                                       │
-│ mcp                           Launch the MCP server                                                                                                        │
-│ heatmap                       HeatMap related commands                                                                                                     │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --version                                        Show the version of CLI and exit                                        │
+│ --release                                TEXT    2.0.1, 2.0 ... [default: 2.0.1]                                         │
+│ --heatmap-storage                        [json]  Storage type for heatmaps (e.g. json) [default: json]                   │
+│ --loglevel            -l                 TEXT    Set the logging level (debug, info, warning, error, critical)           │
+│                                                  [default: warning]                                                      │
+│ --pprint                  --no-pprint            Whether to pretty-print the output (e.g. JSON lists)                    │
+│                                                  [default: no-pprint]                                                    │
+│ --install-completion                             Install completion for the current shell.                               │
+│ --show-completion                                Show completion for the current shell, to copy it or customize the      │
+│                                                  installation.                                                           │
+│ --help                                           Show this message and exit.                                             │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ list-categories               List the categories                                                                        │
+│ list-properties-for-category  List properties for a certain category                                                     │
+│ list-properties-for-threat    List properties for a certain threat                                                       │
+│ list-threats-for-category     List threats for a certain category                                                        │
+│ list-threats-for-property     List threats for a certain device property                                                 │
+│ list-mitigations              List mitigations for a certain threat                                                      │
+│ threat                        Threat Information                                                                         │
+│ mitigation                    Mitigation Information                                                                     │
+│ mcp                           Launch the MCP server                                                                      │
+│ heatmap                       HeatMap related commands                                                                   │
+│ ai                            AI related commands                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 ```
 
