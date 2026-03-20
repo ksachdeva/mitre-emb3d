@@ -1,0 +1,76 @@
+site_name: MITRE EMB3D
+site_description: CLI & Library for working with the MITRE EMB3D threat modeling framework
+site_url: https://ksachdeva.github.io/mitre-emb3d
+repo_url: https://github.com/ksachdeva/mitre-emb3d
+repo_name: ksachdeva/mitre-emb3d
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - tables
+  - def_list
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - getting-started/index.md
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+  - CLI Reference:
+      - cli/index.md
+      - Global Options: cli/global-options.md
+      - Core Commands: cli/core-commands.md
+      - Heatmap Commands: cli/heatmap-commands.md
+      - AI Commands: cli/ai-commands.md
+      - MCP Server: cli/mcp-server.md
+  - Guides:
+      - guides/index.md
+      - Configuration:
+          - guides/configuration/index.md
+          - General Settings: guides/configuration/general.md
+          - Property Mapper Agent: guides/configuration/property-mapper.md
+          - Threat Analyzer Agent: guides/configuration/threat-analyzer.md
+          - LLM Providers: guides/configuration/llm-providers.md

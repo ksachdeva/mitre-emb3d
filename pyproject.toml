@@ -71,6 +71,10 @@ dev = [
     "pre-commit>=4.3.0",
     "textual-dev>=1.8.0",
 ]
+docs = [
+    "mkdocs-material>=9.7.6",
+    "mkdocs-minify-plugin>=0.8.0",
+]
 
 [tool.ruff]
 line-length = 120
