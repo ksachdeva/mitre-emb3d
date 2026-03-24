@@ -2300,7 +2300,7 @@ requires-dist = [
     { name = "google-adk", specifier = ">=1.27.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "jinja2", specifier = ">=3.1.0" },
-    { name = "litellm", specifier = ">=1.82.2" },
+    { name = "litellm", specifier = ">=1.82.0,<=1.82.2" },
     { name = "networkx", specifier = ">=3.6.1" },
     { name = "pathspec", specifier = ">=1.0.3" },
     { name = "pydantic", specifier = ">=2.12.5" },
