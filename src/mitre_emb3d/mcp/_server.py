@@ -1,10 +1,9 @@
 from collections.abc import AsyncIterator
-from typing import Annotated, Any, TypedDict, cast
+from typing import Any, TypedDict
 
 from fastmcp import Context, FastMCP
 from fastmcp.server.lifespan import lifespan
 from fastmcp.tools.function_tool import tool as fast_mcp_tool
-from pydantic import Field
 
 from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._models import (
@@ -18,13 +17,10 @@ from mitre_emb3d._models import (
     ThreatInfo,
     ThreatWithMitigations,
 )
-from mitre_emb3d.heatmap import HeatMapUpdateInfo, ThreatState
-from mitre_emb3d.heatmap._protocols import HeatMapStorage, ProjectName
 
 
 class LifeSpanState(TypedDict):
     graph: MITREGraph
-    heatmap_storage: HeatMapStorage
 
 
 @fast_mcp_tool()
@@ -93,57 +89,10 @@ def get_mitigation(ctx: Context, mitigation_id: MitigationId) -> MitigationWithT
     return MitigationWithThreats(**mitigation.model_dump(), threats=threat_infos)
 
 
-@fast_mcp_tool()
-async def heatmap_init(
-    ctx: Context,
-    name: ProjectName,
-    description: Annotated[str, Field(description="Description of the project")],
-) -> None:
-    """Initialize the heatmap for a project."""
-    heatmap_storage: HeatMapStorage = ctx.lifespan_context["heatmap_storage"]
-    await heatmap_storage.initialize(name, description)
-
-
-@fast_mcp_tool()
-async def heatmap_read_entries(
-    ctx: Context,
-    name: ProjectName,
-    category: Annotated[Emb3dCategory, Field(description="Category to list threat states for")],
-) -> list[ThreatState]:
-    """Read a heatmap entry for a specific threat."""
-    heatmap_storage = cast(HeatMapStorage, ctx.lifespan_context["heatmap_storage"])
-    return await heatmap_storage.read_entries(name, category)
-
-
-@fast_mcp_tool()
-async def heatmap_read_entry(
-    ctx: Context,
-    name: ProjectName,
-    category: Annotated[Emb3dCategory, Field(description="Category to list threat states for")],
-    threat_id: ThreatId,
-) -> ThreatState:
-    """Read a heatmap entry for a specific threat."""
-    heatmap_storage = cast(HeatMapStorage, ctx.lifespan_context["heatmap_storage"])
-    return await heatmap_storage.read_entry(name, category, threat_id)
-
-
-@fast_mcp_tool()
-async def heatmap_update_entry(
-    ctx: Context,
-    name: ProjectName,
-    category: Annotated[Emb3dCategory, Field(description="Category to which the threat belongs to")],
-    threat_id: ThreatId,
-    update_info: Annotated[HeatMapUpdateInfo, Field(description="Information to update the heatmap entry with")],
-) -> None:
-    """Update a heatmap entry"""
-    heatmap_storage = cast(HeatMapStorage, ctx.lifespan_context["heatmap_storage"])
-    await heatmap_storage.update_entry(name, category, threat_id, update_info)
-
-
-def build_mcp_server(graph: MITREGraph, heatmap_storage: HeatMapStorage) -> FastMCP:
+def build_mcp_server(graph: MITREGraph) -> FastMCP:
     @lifespan
     async def app_lifespan(server: FastMCP[Any]) -> AsyncIterator[dict[str, Any]]:
-        yield LifeSpanState(graph=graph, heatmap_storage=heatmap_storage)  # type: ignore
+        yield LifeSpanState(graph=graph)  # type: ignore
 
     mcp = FastMCP(
         "MITRE EMB3D MCP Server",
@@ -158,9 +107,5 @@ def build_mcp_server(graph: MITREGraph, heatmap_storage: HeatMapStorage) -> Fast
     mcp.add_tool(get_mitigations)
     mcp.add_tool(get_threat)
     mcp.add_tool(get_mitigation)
-    mcp.add_tool(heatmap_init)
-    mcp.add_tool(heatmap_read_entries)
-    mcp.add_tool(heatmap_read_entry)
-    mcp.add_tool(heatmap_update_entry)
 
     return mcp

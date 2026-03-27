@@ -5,7 +5,7 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 
-A CLI, TUI, MCP Server & AI based Threat Analysis for https://emb3d.mitre.org/
+A CLI, MCP Server, & AI based Threat Analysis for https://emb3d.mitre.org/
 
 ## Run
 
@@ -42,7 +42,7 @@ uvx mitre-emb3d ai --repo <path-to-repo> --config config.toml gen-site
 See the documentation & guides for more information on configuration
 https://mitre-emb3d.readthedocs.io/en/latest/guides/
 
-### CLI, MCP Server & TUI
+### CLI & MCP Server
 
 You can use the CLI or MCP server or both to build your own solutions
 
@@ -54,7 +54,6 @@ You can use the CLI or MCP server or both to build your own solutions
 * Get detailed information about a threat
 * Get detailed information about a mitigation
 * A CLI - AI Agent first (returns JSON output) / For humans add `--pprint` to see beautiful ouput
-* A TUI - Heatmap creation, reading & update (See TUI section below for screenshots)
 * An MCP Server
 
 Example -
@@ -85,67 +84,31 @@ $ uvx mitre-emb3d --pprint list-threats-for-category "Networking"
 
 ```markdown
 
+ Usage: mitre-emb3d [OPTIONS] COMMAND [ARGS]...
 
- Usage: med [OPTIONS] COMMAND [ARGS]...
-
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --version                                        Show the version of CLI and exit                                        │
-│ --release                                TEXT    2.0.1, 2.0 ... [default: 2.0.1]                                         │
-│ --heatmap-storage                        [json]  Storage type for heatmaps (e.g. json) [default: json]                   │
-│ --loglevel            -l                 TEXT    Set the logging level (debug, info, warning, error, critical)           │
-│                                                  [default: warning]                                                      │
-│ --pprint                  --no-pprint            Whether to pretty-print the output (e.g. JSON lists)                    │
-│                                                  [default: no-pprint]                                                    │
-│ --install-completion                             Install completion for the current shell.                               │
-│ --show-completion                                Show completion for the current shell, to copy it or customize the      │
-│                                                  installation.                                                           │
-│ --help                                           Show this message and exit.                                             │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ list-categories               List the categories                                                                        │
-│ list-properties-for-category  List properties for a certain category                                                     │
-│ list-properties-for-threat    List properties for a certain threat                                                       │
-│ list-threats-for-category     List threats for a certain category                                                        │
-│ list-threats-for-property     List threats for a certain device property                                                 │
-│ list-mitigations              List mitigations for a certain threat                                                      │
-│ threat                        Threat Information                                                                         │
-│ mitigation                    Mitigation Information                                                                     │
-│ mcp                           Launch the MCP server                                                                      │
-│ heatmap                       HeatMap related commands                                                                   │
-│ ai                            AI related commands                                                                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --version                                      Show the version of CLI and exit                                                                                              │
+│ --release                                TEXT  2.0.1, 2.0 ... [default: 2.0.1]                                                                                               │
+│ --loglevel            -l                 TEXT  Set the logging level (debug, info, warning, error, critical) [default: warning]                                              │
+│ --pprint                  --no-pprint          Whether to pretty-print the output (e.g. JSON lists) [default: no-pprint]                                                     │
+│ --install-completion                           Install completion for the current shell.                                                                                     │
+│ --show-completion                              Show completion for the current shell, to copy it or customize the installation.                                              │
+│ --help                                         Show this message and exit.                                                                                                   │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ list-categories               List the categories                                                                                                                            │
+│ list-properties-for-category  List properties for a certain category                                                                                                         │
+│ list-properties-for-threat    List properties for a certain threat                                                                                                           │
+│ list-threats-for-category     List threats for a certain category                                                                                                            │
+│ list-threats-for-property     List threats for a certain device property                                                                                                     │
+│ list-mitigations              List mitigations for a certain threat                                                                                                          │
+│ threat                        Threat Information                                                                                                                             │
+│ mitigation                    Mitigation Information                                                                                                                         │
+│ mcp                           Launch the MCP server                                                                                                                          │
+│ ai                            AI related commands                                                                                                                            │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 ```
-
-## Heatmap TUI
-
-You can use TUI to inspect & edit the Heatmap
-
-```bash
-# Make sure to initialize the heatmap
-uvx mitre-emb3d heatmap init "MyProject" "Description of Project"
-```
-
-- Above command will create `myproject-heatmap.json` file in the local data directory
-  * See https://specifications.freedesktop.org/basedir/latest/
-  * e.g. on macOS & linux it will be in ~/.local/share/mitre-emb3d
-
-- All the entries in the heatmap are set to NOT_INVESTIGATED
-
-
-```bash
-# Show the current state (and edit) using TUI
-uvx mitre-emb3d heatmap tui MyProject
-```
-
-> You can override the default data directory by setting `MITRE_EMB3D_HEATMAP_JSON_STORAGE_DIR` environment variable
-
-
-![Heatmap TUI](assets/tui.svg)
-
-Clicking on Threat Entry will open a screen that presents a Form, Information about Threat & Mitigations
-
-![Heatmap TUI](assets/tui-dialog.svg)
 
 ## MCP Server
 

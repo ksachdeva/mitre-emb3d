@@ -1,7 +1,5 @@
 import logging
-import os
 import sys
-from pathlib import Path
 from typing import Annotated, List, cast
 
 import typer
@@ -13,7 +11,6 @@ from typer import Typer
 
 from mitre_emb3d import __version__
 from mitre_emb3d._graph import MITREGraph
-from mitre_emb3d._locations import data_directory
 from mitre_emb3d._models import (
     Emb3dCategory,
     Emb3dPropertyInfo,
@@ -25,9 +22,6 @@ from mitre_emb3d._models import (
 from mitre_emb3d._stix import make_mitre_graph
 from mitre_emb3d._types import CmdState
 from mitre_emb3d.ai._cli import ai_app
-from mitre_emb3d.heatmap import HeatMapStorageType
-from mitre_emb3d.heatmap._cli import heatmap_app
-from mitre_emb3d.heatmap.backend import JSONHeatMapStorage
 from mitre_emb3d.mcp import build_mcp_server
 
 LOG_LEVELS = {
@@ -40,7 +34,6 @@ LOG_LEVELS = {
 
 
 cli_app = Typer(name=f"MITRE EMB3D CLI [{__version__}]")
-cli_app.add_typer(heatmap_app)
 cli_app.add_typer(ai_app)
 
 
@@ -68,12 +61,6 @@ def main(
             help="2.0.1, 2.0 ...",
         ),
     ] = "2.0.1",
-    heatmap_storage: Annotated[
-        HeatMapStorageType,
-        typer.Option(
-            help="Storage type for heatmaps (e.g. json)",
-        ),
-    ] = HeatMapStorageType.JSON,
     loglevel: Annotated[
         str,
         typer.Option(
@@ -93,7 +80,6 @@ def main(
     ctx.obj = CmdState()
     ctx.obj.pprint = pprint
     ctx.obj.graph = graph
-    ctx.obj.heatmap_storage_type = heatmap_storage
 
 
 @cli_app.command()
@@ -279,19 +265,5 @@ def mcp(ctx: typer.Context) -> None:
     state = cast(CmdState, ctx.obj)
     mitre_graph = state.graph
 
-    assert state.heatmap_storage_type == HeatMapStorageType.JSON, (
-        "Only JSON heatmap storage is supported for the MCP server"
-    )
-
-    storage_dir_from_env = os.getenv("MITRE_EMB3D_HEATMAP_JSON_STORAGE_DIR", None)
-
-    if storage_dir_from_env is None:
-        storage_dir = data_directory()  # type: ignore
-    else:
-        storage_dir = Path(storage_dir_from_env)
-        storage_dir.mkdir(parents=True, exist_ok=True)
-
-    storage = JSONHeatMapStorage(mitre_graph, storage_dir)
-
-    mcp = build_mcp_server(mitre_graph, storage)
+    mcp = build_mcp_server(mitre_graph)
     mcp.run()

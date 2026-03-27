@@ -1,22 +1,12 @@
 from ._graph import MITREGraph
 from .ai._typer_context import AITyperContext
-from .heatmap import HeatMapStorageType
 
 
 class CmdState:
     def __init__(self) -> None:
         self._graph: MITREGraph | None = None
         self._pprint: bool = False
-        self._storage_type: HeatMapStorageType = HeatMapStorageType.JSON
         self._ai: AITyperContext = AITyperContext()
-
-    @property
-    def heatmap_storage_type(self) -> HeatMapStorageType:
-        return self._storage_type
-
-    @heatmap_storage_type.setter
-    def heatmap_storage_type(self, value: HeatMapStorageType) -> None:
-        self._storage_type = value
 
     @property
     def pprint(self) -> bool:
