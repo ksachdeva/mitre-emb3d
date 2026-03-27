@@ -99,6 +99,8 @@ class ThreatAnalyzer:
             parts=[genai_types.Part.from_text(text=new_message)],
         )
 
+        total_tokens = 0
+
         async for event in self._runner.run_async(
             user_id=_USER_ID,
             session_id=session.id,
@@ -106,6 +108,16 @@ class ThreatAnalyzer:
         ):
             if event.content and event.content.parts and event.content.parts[0].text:
                 _LOGGER.debug(f"{event.author}:\n {event.content.parts[0].text}")
+
+            if event.usage_metadata:
+                _LOGGER.debug(f"Prompt tokens: {event.usage_metadata.prompt_token_count}")
+                _LOGGER.debug(f"Response tokens: {event.usage_metadata.candidates_token_count}")
+                _LOGGER.debug(f"Total tokens: {event.usage_metadata.total_token_count}")
+
+                # Track cumulative usage across the session
+                total_tokens += event.usage_metadata.total_token_count or 0
+
+        _LOGGER.debug(f"Total tokens used in session: {total_tokens}")
 
         refreshed_session = await self._runner.session_service.get_session(
             app_name=_APP_NAME,

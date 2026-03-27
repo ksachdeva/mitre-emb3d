@@ -23,6 +23,11 @@ ignore = [
 [property_mapper_agent]
 litellm_provider = "prov-1"
 
+# Max file token per analysis (default to 16000)
+# These tokens corresponding to the source code files and do not include
+# system prompt and extra context
+max_token_per_analysis = 16000
+
 # Number of LLM calls in parallel
 # Default is 4; check your provider for an optimal number of parallel LLM calls it can receive
 number_of_concurrent_analysis = 4
@@ -49,7 +54,12 @@ excluded_categories = []
 ## ---- Threat Analyzer Agent Configuration ---- ##
 
 [threat_analyzer_agent]
-litellm_provider = "prov-3"
+litellm_provider = "prov-2"
+
+# Max file token per analysis (default to 16000)
+# These tokens corresponding to the source code files and do not include
+# system prompt and extra context
+max_token_per_analysis = 16000
 
 # Number of LLM calls in parallel
 # Default is 4; check your provider for an optimal number of parallel LLM calls it can receive

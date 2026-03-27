@@ -21,7 +21,7 @@ class AgentConfig(BaseModel):
 
 class ProperyMapperAgentConfig(AgentConfig):
     max_token_per_analysis: int = Field(
-        default=8000,
+        default=16000,
         description="Maximum number of tokens to use for each analysis run. These tokens do include system prompt etc only the tokens from files.",
     )
 
@@ -48,7 +48,7 @@ class ProperyMapperAgentConfig(AgentConfig):
 
 class ThreatAnalyzerAgentConfig(AgentConfig):
     max_token_per_analysis: int = Field(
-        default=8000,
+        default=16000,
         description="Maximum number of tokens to use for each analysis run. These tokens do include system prompt etc only the tokens from files.",
     )
 

@@ -25,13 +25,9 @@ litellm_provider = "azure-ai"
 
 ### `max_token_per_analysis`
 
-**Type:** `integer` — **Default:** `8000`
+**Type:** `integer` — **Default:** `16000`
 
 Maximum number of tokens the agent may use per analysis run. Increase this for larger repositories or when you want more detailed analysis.
-
-```toml
-max_token_per_analysis = 16000
-```
 
 ### `number_of_concurrent_analysis`
 

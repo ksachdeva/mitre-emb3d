@@ -7,7 +7,7 @@ The `[threat_analyzer_agent]` section controls how the AI agent evaluates threat
 ```toml
 [threat_analyzer_agent]
 litellm_provider = "azure-ai"
-max_token_per_analysis = 8000
+max_token_per_analysis = 16000
 extra_context = []
 excluded_threats = []
 ```
@@ -24,13 +24,10 @@ litellm_provider = "azure-ai"
 
 ### `max_token_per_analysis`
 
-**Type:** `integer` — **Default:** `8000`
+**Type:** `integer` — **Default:** `16000`
 
 Maximum number of tokens the agent may use per analysis run.
 
-```toml
-max_token_per_analysis = 16000
-```
 
 ### `number_of_concurrent_analysis`
 
@@ -69,7 +66,7 @@ excluded_threats = ["TID-110", "TID-222"]
 ```toml
 [threat_analyzer_agent]
 litellm_provider = "gh-copilot-sonnet"
-max_token_per_analysis = 10000
+max_token_per_analysis = 16000
 extra_context = ["docs/security-assessment.md"]
 excluded_threats = ["TID-110"]
 ```
