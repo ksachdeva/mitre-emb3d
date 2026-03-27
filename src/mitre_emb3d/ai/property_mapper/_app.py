@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 from google.adk.runners import InMemoryRunner
 from google.genai import types as genai_types
-from rich import print as rprint
+from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 
 from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, PropertyId
@@ -94,7 +94,7 @@ class PropertyMapper:
             new_message=content,
         ):
             if event.content and event.content.parts and event.content.parts[0].text:
-                rprint(f"{event.author}:\n {event.content.parts[0].text}")
+                _LOGGER.debug("%s: %s", event.author, event.content.parts[0].text)
 
         refreshed_session = await self._runner.session_service.get_session(
             app_name=_APP_NAME,
@@ -166,32 +166,60 @@ class PropertyMapper:
 
         sem = asyncio.Semaphore(self._settings.property_mapper_agent.number_of_concurrent_analysis)
 
-        async def _guarded_analysis(task: _AnalysisTask) -> PropertyMapperOutput:
-            async with sem:
-                return await self._run_analysis(task)
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+        ) as progress:
+            batch_task = progress.add_task("[cyan]Batches", total=len(batches))
+            analysis_task: TaskID | None = None
 
-        for batch in batches:
-            # process one batch at a time, but run analyses for properties in parallel
-            combined_content = self._combine_batch(batch)
-            tasks = self._tasks_for_batch(combined_content)
+            for batch_index, batch in enumerate(batches, 1):
+                file_summary = ", ".join(e.path.name for e in batch[:3])
+                if len(batch) > 3:
+                    file_summary += f" (+{len(batch) - 3} more)"
+                progress.update(
+                    batch_task,
+                    description=f"[cyan]Batch {batch_index}/{len(batches)} — {file_summary}",
+                )
 
-            # run analyses for all properties in this batch in parallel, but limit concurrency with a semaphore
-            async with asyncio.TaskGroup() as tg:
-                futures = [tg.create_task(_guarded_analysis(t)) for t in tasks]
+                combined_content = self._combine_batch(batch)
+                tasks = self._tasks_for_batch(combined_content)
 
-            _LOGGER.info("All analyses for this batch completed, merging results ...")
+                if analysis_task is None:
+                    analysis_task = progress.add_task("[green]Analyses", total=len(tasks))
+                else:
+                    progress.reset(analysis_task, total=len(tasks))
 
-            results = [f.result() for f in futures]
-            batch_merged = self._merge_results(results)
+                async def _guarded_analysis(
+                    task: _AnalysisTask, _atask: TaskID = analysis_task
+                ) -> PropertyMapperOutput:
+                    async with sem:
+                        result = await self._run_analysis(task)
+                        progress.advance(_atask)
+                        return result
 
-            # merge batch results into the running accumulator
-            accumulated = self._merge_results(list(accumulated.values()) + list(batch_merged.values()))
+                # run analyses for all properties in this batch in parallel, but limit concurrency with a semaphore
+                async with asyncio.TaskGroup() as tg:
+                    futures = [tg.create_task(_guarded_analysis(t)) for t in tasks]
 
-            # now dump them in the file system
-            write_property_documents(
-                accumulated,
-                self._mitre_graph,
-                self._settings.output_dir,
-                self._rur.head_commit,
-                self._agent.lite_llm.model,
-            )
+                _LOGGER.info("All analyses for this batch completed, merging results ...")
+
+                results = [f.result() for f in futures]
+                batch_merged = self._merge_results(results)
+
+                # merge batch results into the running accumulator
+                accumulated = self._merge_results(list(accumulated.values()) + list(batch_merged.values()))
+
+                # now dump them in the file system
+                write_property_documents(
+                    accumulated,
+                    self._mitre_graph,
+                    self._settings.output_dir,
+                    self._rur.head_commit,
+                    self._agent.lite_llm.model,
+                )
+
+                progress.advance(batch_task)
