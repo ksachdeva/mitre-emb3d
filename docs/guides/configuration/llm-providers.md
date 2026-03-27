@@ -66,6 +66,30 @@ provider_args = { api_key = "", api_base = "", api_version = "2025-04-01-preview
 
 Environment variables: `AZURE_AI_API_KEY`, `AZURE_AI_API_BASE`. See the [LiteLLM Azure AI docs](https://docs.litellm.ai/docs/providers/azure_ai).
 
+### OpenAI-compatible servers (llama.cpp, local OpenAI-like endpoints)
+
+This mode is used for providers that expose an OpenAI-compatible API
+
+```toml
+[litellm_provider.prov-3]
+model_name = "openai/Qwen3-8B-GGUF"
+provider_args = { api_key = "bogus", api_base = "http://host.docker.internal:8080" }
+```
+
+- `model_name` uses the `openai/` prefix for LiteLLM compatibility.
+- `provider_args.api_key` is typically set from env var `OPENAI_API_KEY` for real credentials.
+- `provider_args.api_base` points to the OpenAI-compatible endpoint in your local/network setup.
+
+Example with environment-backed security (recommended):
+
+```toml
+[litellm_provider.prov-3]
+model_name = "openai/Qwen3-8B-GGUF"
+provider_args = { api_key = "", api_base = "http://host.docker.internal:8080" }
+```
+
+And set (or export) `OPENAI_API_KEY` before running the tool.
+
 ## Using multiple providers
 
 You can define as many providers as you need and assign different ones to different agents:
@@ -84,4 +108,9 @@ provider_args = { api_key = "ollama", api_base = "http://localhost:11434" }
 [litellm_provider.azure-ai]
 model_name = "azure_ai/gpt-5.3-codex"
 provider_args = { api_key = "", api_base = "" }
+
+[litellm_provider.prov-3]
+model_name = "openai/Qwen3-8B-GGUF"
+provider_args = { api_key = "bogus", api_base = "http://localhost:8080" }
+
 ```
