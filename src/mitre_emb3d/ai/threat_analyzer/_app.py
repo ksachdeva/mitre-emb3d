@@ -7,6 +7,7 @@ from google.adk.runners import InMemoryRunner
 from google.genai import types as genai_types
 from rich.console import Console
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.table import Table
 
 from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._models import PropertyId, ThreatId, ThreatInfo, ThreatWithMitigations
@@ -119,6 +120,35 @@ class ThreatAnalyzer:
         assert response is not None, "Expected THREAT_ANALYZER_OUTPUT in session state"
 
         return ThreatAnalyzerOutput.model_validate(response)
+
+    def _print_summary_table(self, accumulated: dict[ThreatId, dict[PropertyId, ThreatAnalyzerOutput]]) -> None:
+        table = Table(title="Threat Analysis Summary", show_lines=True)
+        table.add_column("Threat ID", style="cyan", no_wrap=True)
+        table.add_column("Name")
+        table.add_column("Category", no_wrap=True)
+        table.add_column("Properties", justify="center")
+        table.add_column("Mitigations Applied", justify="center")
+
+        for threat_id, property_results in accumulated.items():
+            threat = self._mitre_graph.get_threat_from_id(threat_id)
+            total_mitigations = sum(len(r.mitigation_info) for r in property_results.values())
+            applied_mitigations = sum(
+                sum(1 for m in r.mitigation_info if m.is_applied) for r in property_results.values()
+            )
+            applied_str = (
+                f"[green]{applied_mitigations}[/] / {total_mitigations}"
+                if applied_mitigations > 0
+                else f"[red]0[/] / {total_mitigations}"
+            )
+            table.add_row(
+                threat_id,
+                threat.name,
+                threat.category,
+                str(len(property_results)),
+                applied_str,
+            )
+
+        self._console.print(table)
 
     def _filesets_by_device_properties(
         self, prop_documents: dict[PropertyId, PropertyArtifactDocument]
@@ -245,3 +275,5 @@ class ThreatAnalyzer:
                 )
 
                 progress.advance(task_id)
+
+        self._print_summary_table(accumulated)
