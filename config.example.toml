@@ -15,7 +15,7 @@ ignore = [
     "libraries",
     "firmware/configs",
     "README.md",
-    "CONTRIBUTING.md"
+    "CONTRIBUTING.md",
 ]
 
 [property_mapper_agent]
@@ -29,7 +29,10 @@ extra_context = []
 # e.g. ["PID-11", "PID-231" ..]
 excluded_properties = []
 
-# you could exclude the entire category
+# you could exclude the entire categories
+# Categories are - "Hardware", "Application Software", "System Software", "Networking"
+# e.g. if you want to only test the tool with Networking then set this field like this
+# excluded_categories = ["Hardware", "Application Software", "System Software"]
 excluded_categories = []
 
 [threat_analyzer_agent]
@@ -55,6 +58,13 @@ provider_args = { api_key = "ollama", api_base = "http://host.docker.internal:11
 [litellm_provider.prov-2]
 model_name = "ollama_chat/kimi-k2.5:cloud"
 provider_args = { api_key = "ollama", api_base = "http://host.docker.internal:11434" }
+
+[litellm_provider.prov-3]
+# This config is showing OpenAI compatile servers e.g llama.cpp etc
+# if you are using models that require real api_key then set it via the
+# environment variable OPENAI_API_KEY instead of using api_key in provider_args
+model_name = "openai/Qwen3-8B-GGUF"
+provider_args = { api_key = "bogus", api_base = "http://host.docker.internal:8080" }
 
 [litellm_provider.gh-copilot-sonnet]
 # for github copilit models, you would be asked to verify
