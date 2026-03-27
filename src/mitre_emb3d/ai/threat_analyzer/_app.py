@@ -198,7 +198,8 @@ class ThreatAnalyzer:
                     _LOGGER.info(f"Processing property {prop.id} related to threat {threat.id} ...")
                     files_for_prop = file_sets.get(prop.id, [])
                     if not files_for_prop:
-                        _LOGGER.warning(f"No files found for property {prop.id} related to threat {threat.id}")
+                        # absence of files indicate that propery was deemed not applicable by the property mapper,
+                        # so we should skip analysis for this property
                         continue
 
                     context_batches = self._naive_context_provider.get_context(
