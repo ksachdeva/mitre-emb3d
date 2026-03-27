@@ -5,7 +5,9 @@ from typing import NamedTuple
 
 from google.adk.runners import InMemoryRunner
 from google.genai import types as genai_types
+from rich.console import Console
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
+from rich.table import Table
 
 from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._models import Emb3dCategory, Emb3dPropertyInfo, PropertyId
@@ -138,6 +140,30 @@ class PropertyMapper:
                 )
         return tasks
 
+    def _build_category_lookup(self) -> dict[PropertyId, Emb3dCategory]:
+        return {
+            prop.property_id: category for category, props in self._properties_by_category.items() for prop in props
+        }
+
+    def _print_summary_table(self, accumulated: dict[PropertyId, PropertyMapperOutput]) -> None:
+        category_lookup = self._build_category_lookup()
+
+        table = Table(title="Property Mapper Results", show_lines=False)
+        table.add_column("Category", style="cyan", no_wrap=True)
+        table.add_column("Property ID", style="bold")
+        table.add_column("Applicable", justify="center")
+
+        rows = sorted(
+            accumulated.values(),
+            key=lambda r: (str(category_lookup.get(r.property_id, "")), r.property_id),
+        )
+        for result in rows:
+            category = category_lookup.get(result.property_id, "")
+            applicable = "[green]Yes[/green]" if result.is_relevant else "[dim]No[/dim]"
+            table.add_row(str(category), result.property_id, applicable)
+
+        Console().print(table)
+
     def _merge_results(self, results: list[PropertyMapperOutput]) -> dict[PropertyId, PropertyMapperOutput]:
         merged: dict[PropertyId, PropertyMapperOutput] = {}
         for result in results:
@@ -193,8 +219,11 @@ class PropertyMapper:
                 else:
                     progress.reset(analysis_task, total=len(tasks))
 
+                assert analysis_task is not None
+                _current_analysis_task: TaskID = analysis_task
+
                 async def _guarded_analysis(
-                    task: _AnalysisTask, _atask: TaskID = analysis_task
+                    task: _AnalysisTask, _atask: TaskID = _current_analysis_task
                 ) -> PropertyMapperOutput:
                     async with sem:
                         result = await self._run_analysis(task)
@@ -223,3 +252,5 @@ class PropertyMapper:
                 )
 
                 progress.advance(batch_task)
+
+        self._print_summary_table(accumulated)
