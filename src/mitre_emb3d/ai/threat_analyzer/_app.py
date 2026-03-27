@@ -5,7 +5,8 @@ from pathlib import Path
 
 from google.adk.runners import InMemoryRunner
 from google.genai import types as genai_types
-from rich import print as rprint
+from rich.console import Console
+from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from mitre_emb3d._graph import MITREGraph
 from mitre_emb3d._models import PropertyId, ThreatId, ThreatInfo, ThreatWithMitigations
@@ -73,6 +74,7 @@ class ThreatAnalyzer:
     ) -> None:
         self._mitre_graph = mitre_graph
         self._settings = settings
+        self._console = Console()
         self._agent = ThreatAnalyzerAgent(settings=self._settings)
         self._runner = InMemoryRunner(agent=self._agent, app_name=_APP_NAME)
         self._naive_context_provider = NaiveContextProvider(rur)
@@ -102,7 +104,7 @@ class ThreatAnalyzer:
             new_message=content,
         ):
             if event.content and event.content.parts and event.content.parts[0].text:
-                rprint(f"{event.author}:\n {event.content.parts[0].text}")
+                _LOGGER.debug(f"{event.author}:\n {event.content.parts[0].text}")
 
         refreshed_session = await self._runner.session_service.get_session(
             app_name=_APP_NAME,
@@ -172,59 +174,73 @@ class ThreatAnalyzer:
             async with sem:
                 return await self._run_analysis(task)
 
-        for threat in threats:
-            _LOGGER.info(f"Analyzing threat {threat.id} - {threat.name} ...")
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            console=self._console,
+        ) as progress:
+            task_id = progress.add_task("Analyzing threats...", total=len(threats))
 
-            related_properties = self._mitre_graph.get_properties_for_threat(threat.id)
-            threat_with_mitigations = self._mitre_graph.get_threat_with_mitigations(threat.id)
+            for threat in threats:
+                progress.update(task_id, description=f"[cyan]{threat.id}[/] {threat.name}")
+                _LOGGER.info(f"Analyzing threat {threat.id} - {threat.name} ...")
 
-            # collect all tasks across properties and batches for this threat
-            all_tasks: list[_AnalysisTask] = []
+                related_properties = self._mitre_graph.get_properties_for_threat(threat.id)
+                threat_with_mitigations = self._mitre_graph.get_threat_with_mitigations(threat.id)
 
-            for prop in related_properties:
-                _LOGGER.info(f"Processing property {prop.id} related to threat {threat.id} ...")
-                files_for_prop = file_sets.get(prop.id, [])
-                if not files_for_prop:
-                    _LOGGER.warning(f"No files found for property {prop.id} related to threat {threat.id}")
-                    continue
+                # collect all tasks across properties and batches for this threat
+                all_tasks: list[_AnalysisTask] = []
 
-                context_batches = self._naive_context_provider.get_context(
-                    max_tokens=self._settings.threat_analyzer_agent.max_token_per_analysis,
-                    file_set=files_for_prop,
-                )
+                for prop in related_properties:
+                    _LOGGER.info(f"Processing property {prop.id} related to threat {threat.id} ...")
+                    files_for_prop = file_sets.get(prop.id, [])
+                    if not files_for_prop:
+                        _LOGGER.warning(f"No files found for property {prop.id} related to threat {threat.id}")
+                        continue
 
-                for batch in context_batches:
-                    combined_content = _combine_batch(batch)
-                    all_tasks.append(
-                        _AnalysisTask(
-                            threat=threat_with_mitigations,
-                            property_id=prop.id,
-                            property_name=prop.name,
-                            combined_content=combined_content,
-                        )
+                    context_batches = self._naive_context_provider.get_context(
+                        max_tokens=self._settings.threat_analyzer_agent.max_token_per_analysis,
+                        file_set=files_for_prop,
                     )
 
-            if not all_tasks:
-                _LOGGER.info(f"No analysis tasks for threat {threat.id}, skipping.")
-                continue
+                    for batch in context_batches:
+                        combined_content = _combine_batch(batch)
+                        all_tasks.append(
+                            _AnalysisTask(
+                                threat=threat_with_mitigations,
+                                property_id=prop.id,
+                                property_name=prop.name,
+                                combined_content=combined_content,
+                            )
+                        )
 
-            # run all tasks for this threat concurrently (bounded by semaphore)
-            async with asyncio.TaskGroup() as tg:
-                futures = [tg.create_task(_guarded_analysis(t)) for t in all_tasks]
+                if not all_tasks:
+                    _LOGGER.info(f"No analysis tasks for threat {threat.id}, skipping.")
+                    progress.advance(task_id)
+                    continue
 
-            _LOGGER.info(f"All analyses for threat {threat.id} completed, merging results ...")
+                # run all tasks for this threat concurrently (bounded by semaphore)
+                async with asyncio.TaskGroup() as tg:
+                    futures = [tg.create_task(_guarded_analysis(t)) for t in all_tasks]
 
-            results = [f.result() for f in futures]
+                _LOGGER.info(f"All analyses for threat {threat.id} completed, merging results ...")
 
-            # merge results into per-property accumulator for this threat
-            threat_acc = accumulated.get(threat.id, {})
-            accumulated[threat.id] = self._merge_results(threat_acc, results)
+                results = [f.result() for f in futures]
 
-            # flush after each threat
-            write_threat_documents(
-                accumulated,
-                self._mitre_graph,
-                self._settings.output_dir,
-                self._rur.head_commit,
-                self._agent.lite_llm.model,
-            )
+                # merge results into per-property accumulator for this threat
+                threat_acc = accumulated.get(threat.id, {})
+                accumulated[threat.id] = self._merge_results(threat_acc, results)
+
+                # flush after each threat
+                write_threat_documents(
+                    accumulated,
+                    self._mitre_graph,
+                    self._settings.output_dir,
+                    self._rur.head_commit,
+                    self._agent.lite_llm.model,
+                )
+
+                progress.advance(task_id)
