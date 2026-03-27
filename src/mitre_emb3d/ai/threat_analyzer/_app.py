@@ -166,7 +166,7 @@ class ThreatAnalyzer:
 
         accumulated: dict[ThreatId, dict[PropertyId, ThreatAnalyzerOutput]] = {}
 
-        sem = asyncio.Semaphore(4)
+        sem = asyncio.Semaphore(self._settings.threat_analyzer_agent.number_of_concurrent_analysis)
 
         async def _guarded_analysis(task: _AnalysisTask) -> ThreatAnalyzerOutput:
             async with sem:

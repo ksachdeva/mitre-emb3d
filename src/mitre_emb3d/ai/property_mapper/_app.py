@@ -164,7 +164,7 @@ class PropertyMapper:
         )
         accumulated: dict[PropertyId, PropertyMapperOutput] = {}
 
-        sem = asyncio.Semaphore(4)
+        sem = asyncio.Semaphore(self._settings.property_mapper_agent.number_of_concurrent_analysis)
 
         async def _guarded_analysis(task: _AnalysisTask) -> PropertyMapperOutput:
             async with sem:

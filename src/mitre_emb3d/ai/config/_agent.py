@@ -22,7 +22,12 @@ class AgentConfig(BaseModel):
 class ProperyMapperAgentConfig(AgentConfig):
     max_token_per_analysis: int = Field(
         default=8000,
-        description="Maximum number of tokens to use for each analysis run",
+        description="Maximum number of tokens to use for each analysis run. These tokens do include system prompt etc only the tokens from files.",
+    )
+
+    number_of_concurrent_analysis: int = Field(
+        default=4,
+        description="Number of concurrent analysis to run. ",
     )
 
     extra_context: list[Path] = Field(
@@ -44,7 +49,12 @@ class ProperyMapperAgentConfig(AgentConfig):
 class ThreatAnalyzerAgentConfig(AgentConfig):
     max_token_per_analysis: int = Field(
         default=8000,
-        description="Maximum number of tokens to use for each analysis run",
+        description="Maximum number of tokens to use for each analysis run. These tokens do include system prompt etc only the tokens from files.",
+    )
+
+    number_of_concurrent_analysis: int = Field(
+        default=4,
+        description="Number of concurrent analysis to run. ",
     )
 
     extra_context: list[Path] = Field(

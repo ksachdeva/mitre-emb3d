@@ -18,11 +18,22 @@ ignore = [
     "CONTRIBUTING.md",
 ]
 
+## ---- Property Mapper Agent Configuration ---- ##
+
 [property_mapper_agent]
 litellm_provider = "prov-1"
+
+# Number of LLM calls in parallel
+# Default is 4; check your provider for an optimal number of parallel LLM calls it can receive
+number_of_concurrent_analysis = 4
+
 # The extra context is a list of file paths
-# (Markdown, text) that could enhance PropertyMapper agents
-# These would be appended after the system prompt of the agent
+# (Markdown, text) that could enhance Property Mapper agent
+# for example, you can provide the arch diagrams etc and/or exceptions that the LLM should
+# take into consideration
+#
+# The files mentioned as part of list will be appended to the system prompt and will be
+# applied for all properties
 extra_context = []
 
 # contains the list of device properties to not even consider
@@ -35,17 +46,30 @@ excluded_properties = []
 # excluded_categories = ["Hardware", "Application Software", "System Software"]
 excluded_categories = []
 
+## ---- Threat Analyzer Agent Configuration ---- ##
+
 [threat_analyzer_agent]
-litellm_provider = "prov-1"
+litellm_provider = "prov-3"
+
+# Number of LLM calls in parallel
+# Default is 4; check your provider for an optimal number of parallel LLM calls it can receive
+number_of_concurrent_analysis = 4
+
 # The extra context is a list of file paths
 # (Markdown, text) that could enhance Threat Analyzer agent
-# These would be appended after the system prompt of the agent
+# for example, you can provide the arch diagrams etc and/or exceptions that the LLM should
+# take into consideration
+#
+# The files mentioned as part of list will be appended to the system prompt and will be
+# applied to all threats
 extra_context = []
 
 # contains the list of threats to not even consider
 # e.g. ["TID-110", "TID-222" ..]
 excluded_threats = []
 
+
+## ---- LiteLLM Providers Configuration ---- ##
 
 # LiteLLM Providers
 # In the examples below prov-1, prov-2 are the names that
