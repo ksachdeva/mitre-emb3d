@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "AI Agent harness for MITRE EMB3D Threat Modeling framework.",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "plugins": [
     {

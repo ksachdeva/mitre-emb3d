@@ -1,6 +1,6 @@
 {
   "name": "mitre-emb3d",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "AI Agent harness for MITRE EMB3D Threat Modeling framework.",
   "author": {
     "name": "Kapil Sachdeva"
