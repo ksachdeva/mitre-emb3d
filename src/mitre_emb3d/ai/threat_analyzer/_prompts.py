@@ -31,6 +31,13 @@ You are doing the analysis for
 Your goal is to determine if the supplied context provides evidence that mitigations for the specific threat have been applied in the project.
 For each mitigation, determine whether it is applied or not, and provide an explanation based on the provided context.
 
+**Special Notes**:
+
+When analyzing c/c++ code, if the header files in the context only contain declarations and no implementations,
+they may not provide strong evidence of relevance on their own.
+
+In such cases, do not perform threat analysis & mitigation applicability analysis unless there are other supporting evidence in the context that indicates the threat.
+
 **Output**:
 
 Your output should be a JSON object (and NOTHING ELSE) with the following format. No Markdown. No code fences. No Explanations. Just the JSON.
