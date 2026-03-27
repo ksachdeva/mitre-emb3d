@@ -2276,6 +2276,8 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "mkdocs-material" },
+    { name = "mkdocs-minify-plugin" },
     { name = "mypy" },
     { name = "packaging" },
     { name = "poethepoet" },
@@ -2287,10 +2289,6 @@ dev = [
     { name = "pytest-xdist" },
     { name = "ruff" },
     { name = "textual-dev" },
-]
-docs = [
-    { name = "mkdocs-material" },
-    { name = "mkdocs-minify-plugin" },
 ]
 
 [package.metadata]
@@ -2313,6 +2311,8 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "mkdocs-material", specifier = ">=9.7.6" },
+    { name = "mkdocs-minify-plugin", specifier = ">=0.8.0" },
     { name = "mypy", specifier = ">=1.10.0" },
     { name = "packaging", specifier = ">=24.2" },
     { name = "poethepoet", specifier = ">=0.30.0" },
@@ -2324,10 +2324,6 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.6.1" },
     { name = "ruff", specifier = ">=0.4.8" },
     { name = "textual-dev", specifier = ">=1.8.0" },
-]
-docs = [
-    { name = "mkdocs-material", specifier = ">=9.7.6" },
-    { name = "mkdocs-minify-plugin", specifier = ">=0.8.0" },
 ]
 
 [[package]]

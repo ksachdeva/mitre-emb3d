@@ -70,8 +70,6 @@ dev = [
     "ruff>=0.4.8",
     "pre-commit>=4.3.0",
     "textual-dev>=1.8.0",
-]
-docs = [
     "mkdocs-material>=9.7.6",
     "mkdocs-minify-plugin>=0.8.0",
 ]
