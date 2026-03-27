@@ -11,7 +11,6 @@ uvx mitre-emb3d [OPTIONS] COMMAND [ARGS]...
 | Group | Description |
 |---|---|
 | [Core Commands](core-commands.md) | Query categories, properties, threats, and mitigations |
-| [Heatmap Commands](heatmap-commands.md) | Initialize and manage threat assessment heatmaps |
 | [AI Commands](ai-commands.md) | AI-powered property mapping, threat analysis, and report generation |
 | [MCP Server](mcp-server.md) | Launch the Model Context Protocol server |
 

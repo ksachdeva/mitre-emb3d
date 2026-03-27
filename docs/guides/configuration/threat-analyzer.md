@@ -32,6 +32,16 @@ Maximum number of tokens the agent may use per analysis run.
 max_token_per_analysis = 16000
 ```
 
+### `number_of_concurrent_analysis`
+
+**Type:** `integer` — **Default:** `4`
+
+Number of concurrent analysis tasks the agent may run in parallel. Adjust based on your system resources and provider rate limits.
+
+```toml
+number_of_concurrent_analysis = 8
+```
+
 ### `extra_context`
 
 **Type:** `list[string]` (file paths)

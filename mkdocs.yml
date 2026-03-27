@@ -66,7 +66,6 @@ nav:
       - cli/index.md
       - Global Options: cli/global-options.md
       - Core Commands: cli/core-commands.md
-      - Heatmap Commands: cli/heatmap-commands.md
       - AI Commands: cli/ai-commands.md
       - MCP Server: cli/mcp-server.md
   - Guides:

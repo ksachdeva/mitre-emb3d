@@ -24,10 +24,6 @@ MITRE EMB3D release version to use. Defaults to `2.0.1`.
 uvx mitre-emb3d --release 2.0.1 list-categories
 ```
 
-### `--heatmap-storage [json]`
-
-Storage backend for heatmaps. Currently only `json` is supported.
-
 ### `--loglevel`, `-l TEXT`
 
 Set the logging level. One of: `debug`, `info`, `warning`, `error`, `critical`.

@@ -20,10 +20,6 @@ The MCP server exposes the following tools:
 | `get_mitigations(threat_id)` | Mitigations for a threat |
 | `get_threat(threat_id)` | Threat details with mitigations |
 | `get_mitigation(mitigation_id)` | Mitigation details with threats |
-| `heatmap_init(name, description)` | Initialize a heatmap |
-| `heatmap_read_entries(name, category)` | Read heatmap entries for a category |
-| `heatmap_read_entry(name, category, threat_id)` | Read a single heatmap entry |
-| `heatmap_update_entry(name, category, threat_id, update_info)` | Update a heatmap entry |
 
 ## Usage with AI assistants
 

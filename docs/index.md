@@ -20,8 +20,7 @@ MITRE EMB3D is a threat model framework that provides a structured approach to i
 - **Query** device properties, threats, and mitigations from the EMB3D framework
 - **Map** your repository's codebase to relevant EMB3D device properties using AI agents
 - **Analyze** threats applicable to your project and evaluate mitigations
-- **Generate** static HTML report sites from analysis results
-- **Track** threat assessment progress with heatmaps
+- **Generate** static HTML report sites from analysis results (including heatmap overview)
 - **Expose** all functionality via an MCP server for AI assistant integration
 
 ## Quick links
